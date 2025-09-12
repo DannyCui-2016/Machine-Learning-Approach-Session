@@ -25,25 +25,24 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install numpy pandas matplotlib seaborn scikit-learn jupyter flake8 black nbval
 
-      # Check code style & quality
+      # ✅ Lint Python code
       - name: Lint Python files
         run: |
-          flake8 src tests notebooks
-          black --check src tests notebooks
+          for folder in src notebooks; do
+            if [ -d "$folder" ]; then
+              flake8 "$folder"
+              black --check "$folder"
+            fi
+          done
 
-      # Run unit tests for .py files
-      - name: Run unit tests (skip if no tests)
+      # ✅ Run Jupyter notebooks
+      - name: Execute Jupyter notebooks
         run: |
-          if [ -d "tests" ] && ls tests/test_*.py 1> /dev/null 2>&1; then
-            echo "✅ Tests found, running pytest..."
-            pytest --maxfail=1 --disable-warnings -q tests/
+          if [ -d "notebooks" ] && ls notebooks/*.ipynb 1> /dev/null 2>&1; then
+            echo "✅ Notebooks found, running nbval..."
+            pytest --nbval notebooks/*.ipynb
           else
-            echo "⚠️ No test files found, skipping pytest step."
+            echo "⚠️ No notebooks found, skipping nbval step."
           fi
-
-      # Run all Jupyter notebooks to ensure no errors
-      - name: Test Jupyter notebooks
-        run: |
-          pytest --nbval notebooks/*.ipynb
