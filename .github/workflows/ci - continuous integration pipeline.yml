@@ -34,9 +34,14 @@ jobs:
           black --check src tests notebooks
 
       # Run unit tests for .py files
-      - name: Run unit tests
+      - name: Run unit tests (skip if no tests)
         run: |
-          pytest --maxfail=1 --disable-warnings -q tests/
+          if [ -d "tests" ] && ls tests/test_*.py 1> /dev/null 2>&1; then
+            echo "✅ Tests found, running pytest..."
+            pytest --maxfail=1 --disable-warnings -q tests/
+          else
+            echo "⚠️ No test files found, skipping pytest step."
+          fi
 
       # Run all Jupyter notebooks to ensure no errors
       - name: Test Jupyter notebooks
