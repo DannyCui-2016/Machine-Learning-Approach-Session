@@ -18,3 +18,10 @@ All practices are the resouces from Python for Data Science and Machine Learning
 - Natural Language Processing
 - Neural Nets and Deep Learning
 - Big Data and Spark with Python
+
+1. create a new branch based on origin
+   - command + shift + P
+   - select: Git: Create Branch From...
+   - enter:  origin/main
+   - enter branch name: Danny/ML-2 (or other formatted branch name for other projects in fugure)
+   - make sure: Branch name created to be checked at the left-bottom in VS code
