@@ -25,3 +25,5 @@ All practices are the resouces from Python for Data Science and Machine Learning
    - enter:  origin/main
    - enter branch name: Danny/ML-2 (or other formatted branch name for other projects in fugure)
    - make sure: Branch name created to be checked at the left-bottom in VS code
+2. Section 13 Data Capstone Project
+   - 911 data: https://www.kaggle.com/datasets/alinecristini/911csv
