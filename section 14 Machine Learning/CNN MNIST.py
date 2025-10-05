@@ -26,11 +26,11 @@ model.compile(optimizer="adam",
               metrics=["accuracy"])
 
 # 4. Train model
-history = model.fit(x_train, y_train, epochs=5, validation_split=0.1)
+history = model.fit(x_train, y_train, epochs=10, validation_split=0.1)
 
 # 5. Evaluate
 test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
-print("\n✅ Test Accuracy:", test_acc)
+print("\n Test Accuracy:", test_acc)
 
 # 6. Plot training history
 plt.plot(history.history['accuracy'], label='train acc')
