@@ -90,8 +90,9 @@ coef_df = pd.DataFrame({
     'Coefficient': log_model.coef_[0]
 }).sort_values(by='Coefficient', ascending=False)
 
-plt.barh(coef_df['Feature'], coef_df['Coefficient'], color='skyblue')
+plt.barh(coef_df['Feature'], coef_df['Coefficient'], color='green')
 plt.xlabel("Coefficient value")
 plt.title("Feature importance (Logistic Regression)")
 plt.gca().invert_yaxis()
 plt.show()
+plt.savefig("feature_importance_logistic_regression.png")
