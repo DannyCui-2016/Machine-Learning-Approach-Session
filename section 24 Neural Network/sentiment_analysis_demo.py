@@ -24,11 +24,23 @@ data = {
         "Not bad, but could have been better.",
         "Awful acting, I fell asleep halfway.",
         "Loved every minute of it!",
-        "Poorly written and directed."
+        "Poorly written and directed.",
+        "Superb film! The characters felt real.",
+        "Disgusting script, horrible acting.",
+        "Mediocre movie with decent visuals.",
+        "Brilliant! I’d watch it again.",
+        "One of the worst films ever made.",
+        "Incredible performance by the lead actor.",
+        "Boring and way too long.",
+        "Heartwarming and touching story.",
+        "Pathetic plot and poor execution.",
+        "Cinematic masterpiece with great pacing."
     ],
     "sentiment": [
         "positive", "negative", "negative", "positive", "negative",
-        "positive", "neutral", "negative", "positive", "negative"
+        "positive", "neutral", "negative", "positive", "negative",
+        "positive", "negative", "neutral", "positive", "negative",
+        "positive", "negative", "positive", "negative", "positive"
     ]
 }
 
