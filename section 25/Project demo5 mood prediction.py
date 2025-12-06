@@ -1,64 +1,66 @@
+
+
+
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Embedding, LSTM, Dense
+from tensorflow.keras.layers import Dense
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
-# ===================================
-# 1. Toy Dataset (小样本示例数据)
-# ===================================
-sentences = [
-    "I love this movie",
-    "This film is amazing",
-    "What a great day",
-    "I am very happy",
-    "This product is bad",
-    "I hate this movie",
-    "This is terrible",
-    "I am very sad"
-]
+# =====================================
+# 1. 构造模拟生活行为数据（可替换成真实数据）
+# =====================================
+# 特征：[睡觉时间(小时24制), 起床时间, 咖啡杯数, 是否午睡(1/0), 夜间精神(1高/0低)]
+X = np.array([
+    [22, 6, 1, 1, 0], [23, 7, 2, 1, 0], [21, 6, 0, 1, 0],
+    [1, 9, 3, 0, 1],  [2, 10, 4, 0, 1], [0, 8, 3, 0, 1],
+    [23, 7, 1, 1, 0], [22, 5, 2, 1, 0], [3, 11, 4, 0, 1],
+    [4, 12, 5, 0, 1], [21, 6, 1, 1, 0], [1, 9, 4, 0, 1],
+])
 
-labels = [1,1,1,1,0,0,0,0]  # 1=positive, 0=negative
+# 标签：0 = 早起型，1 = 夜猫子
+y = np.array([0,0,0,1,1,1,0,0,1,1,0,1])
 
-# ===================================
-# 2. Tokenization
-# ===================================
-tokenizer = Tokenizer(num_words=1000)
-tokenizer.fit_on_texts(sentences)
+# =====================================
+# 2. 数据拆分 + 标准化
+# =====================================
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-X = tokenizer.texts_to_sequences(sentences)
-X = pad_sequences(X, maxlen=6)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
 
-y = np.array(labels)
-
-# ===================================
-# 3. Build Model
-# ===================================
+# =====================================
+# 3. 构建分类模型
+# =====================================
 model = Sequential([
-    Embedding(input_dim=1000, output_dim=16, input_length=6),
-    LSTM(32),
-    Dense(1, activation="sigmoid")
+    Dense(16, activation="relu", input_shape=(X_train.shape[1],)),
+    Dense(8, activation="relu"),
+    Dense(1, activation="sigmoid")  # 二分类输出
 ])
 
 model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
 model.summary()
 
-# ===================================
-# 4. Train
-# ===================================
-model.fit(X, y, epochs=15)
+# =====================================
+# 4. 训练
+# =====================================
+model.fit(X_train, y_train, epochs=30, verbose=0)
 
-# ===================================
-# 5. Predict
-# ===================================
-def predict_sentiment(text):
-    seq = tokenizer.texts_to_sequences([text])
-    seq = pad_sequences(seq, maxlen=6)
-    pred = model.predict(seq)[0][0]
-    return "Positive 😀" if pred>0.5 else "Negative ☹️"
+loss, acc = model.evaluate(X_test, y_test)
+print(f"\n模型准确率: {acc*100:.2f}%")
 
-print(predict_sentiment("I really love it"))
-print(predict_sentiment("This feels bad"))
-print(predict_sentiment("Amazing product"))
-print(predict_sentiment("I hate everything"))
+# =====================================
+# 5. 新样本预测
+# =====================================
+def predict_type(data):
+    data = scaler.transform([data])
+    pred = model.predict(data)[0][0]
+    return "夜猫子 🦉" if pred>0.5 else "早起型 ☀️"
+
+# 测试一个新输入
+print("\n预测测试:")
+print(predict_type([22, 6, 1, 1, 0]))
+print(predict_type([2, 10, 4, 0, 1]))
+
