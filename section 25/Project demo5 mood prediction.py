@@ -1,66 +1,64 @@
-
-
-
 import numpy as np
-import tensorflow as tf
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Embedding, LSTM, Dense
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 
-# =====================================
-# 1. 构造模拟生活行为数据（可替换成真实数据）
-# =====================================
-# 特征：[睡觉时间(小时24制), 起床时间, 咖啡杯数, 是否午睡(1/0), 夜间精神(1高/0低)]
-X = np.array([
-    [22, 6, 1, 1, 0], [23, 7, 2, 1, 0], [21, 6, 0, 1, 0],
-    [1, 9, 3, 0, 1],  [2, 10, 4, 0, 1], [0, 8, 3, 0, 1],
-    [23, 7, 1, 1, 0], [22, 5, 2, 1, 0], [3, 11, 4, 0, 1],
-    [4, 12, 5, 0, 1], [21, 6, 1, 1, 0], [1, 9, 4, 0, 1],
-])
+# =============================
+# 1. 小型训练数据样本
+# =============================
+items = [
+    "塑料瓶", "矿泉水瓶", "啤酒瓶", "饮料瓶", "易拉罐", "快递纸盒", "玻璃瓶",
+    "果皮", "剩饭", "菜叶", "茶叶渣", "骨头", "西瓜皮", "香蕉皮",
+    "电池", "荧光灯", "药品", "油漆桶", "废旧灯泡",
+    "灰土", "纸巾", "烟头", "尘土", "口罩"
+]
 
-# 标签：0 = 早起型，1 = 夜猫子
-y = np.array([0,0,0,1,1,1,0,0,1,1,0,1])
+labels = [
+    0,0,0,0,0,0,0,   # 可回收物 0
+    1,1,1,1,1,1,1,   # 厨余垃圾 1
+    2,2,2,2,2,       # 有害垃圾 2
+    3,3,3,3,3        # 其他垃圾 3
+]
 
-# =====================================
-# 2. 数据拆分 + 标准化
-# =====================================
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+label_names = ["可回收物♻", "厨余垃圾🍃", "有害垃圾☣", "其他垃圾🗑"]
 
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+# =============================
+# 2. Text Tokenize
+# =============================
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts(items)
 
-# =====================================
-# 3. 构建分类模型
-# =====================================
+X = tokenizer.texts_to_sequences(items)
+X = pad_sequences(X, maxlen=3)
+y = np.array(labels)
+
+# =============================
+# 3. Build & Train model
+# =============================
 model = Sequential([
-    Dense(16, activation="relu", input_shape=(X_train.shape[1],)),
-    Dense(8, activation="relu"),
-    Dense(1, activation="sigmoid")  # 二分类输出
+    Embedding(input_dim=50, output_dim=16, input_length=3),
+    LSTM(32),
+    Dense(4, activation="softmax")
 ])
 
-model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
-model.summary()
+model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+model.fit(X, y, epochs=50, verbose=0)
 
-# =====================================
-# 4. 训练
-# =====================================
-model.fit(X_train, y_train, epochs=30, verbose=0)
+print("训练完成！")
 
-loss, acc = model.evaluate(X_test, y_test)
-print(f"\n模型准确率: {acc*100:.2f}%")
+# =============================
+# 4. 预测函数
+# =============================
+def classify(item):
+    seq = tokenizer.texts_to_sequences([item])
+    seq = pad_sequences(seq, maxlen=3)
+    pred = model.predict(seq)[0]
+    return label_names[np.argmax(pred)]
 
-# =====================================
-# 5. 新样本预测
-# =====================================
-def predict_type(data):
-    data = scaler.transform([data])
-    pred = model.predict(data)[0][0]
-    return "夜猫子 🦉" if pred>0.5 else "早起型 ☀️"
-
-# 测试一个新输入
-print("\n预测测试:")
-print(predict_type([22, 6, 1, 1, 0]))
-print(predict_type([2, 10, 4, 0, 1]))
-
+# 测试
+print(classify("矿泉水瓶"))
+print(classify("剩饭"))
+print(classify("电池"))
+print(classify("口罩"))
