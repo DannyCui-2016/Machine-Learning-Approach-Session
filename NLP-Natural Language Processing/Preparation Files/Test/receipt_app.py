@@ -5,7 +5,7 @@ import pandas as pd
 import re
 
 # ---------------------------
-# 商品分类规则（可扩展）
+# 商品分类规则
 # ---------------------------
 CATEGORY_RULES = {
     "Food": ["apple", "banana", "bread", "milk", "rice", "noodle", "egg", "chicken"],
@@ -26,12 +26,11 @@ def classify_item(text):
 # OCR识别
 # ---------------------------
 def extract_text_from_image(image):
-    text = pytesseract.image_to_string(image)
-    return text
+    return pytesseract.image_to_string(image)
 
 
 # ---------------------------
-# 简单解析商品行
+# 解析商品
 # ---------------------------
 def parse_items(text):
     lines = text.split("\n")
@@ -42,10 +41,8 @@ def parse_items(text):
         if len(line) < 3:
             continue
 
-        # 尝试提取价格
         price_match = re.search(r"(\d+\.\d{2})", line)
         price = price_match.group(1) if price_match else ""
-
         name = re.sub(r"\d+\.\d{2}", "", line).strip()
 
         if name:
@@ -60,32 +57,52 @@ def parse_items(text):
 
 
 # ---------------------------
-# Streamlit UI
+# 页面布局
 # ---------------------------
-st.set_page_config(page_title="Receipt NLP Analyzer", layout="wide")
-st.title("🧾 超市收据识别与分类系统")
+st.set_page_config(page_title="Receipt NLP System", layout="wide")
+st.title("🧾 超市收据识别系统")
 
-uploaded_file = st.file_uploader("上传收据图片", type=["jpg", "png", "jpeg"])
+# 左右两列
+left_col, right_col = st.columns([1, 2])
 
+# 左侧区域
+with left_col:
+    st.subheader("📷 图片预览")
+    image_placeholder = st.empty()
+
+    st.markdown("---")
+    uploaded_file = st.file_uploader(
+        "📤 上传收据图片",
+        type=["jpg", "png", "jpeg"]
+    )
+
+# 右侧区域
+with right_col:
+    st.subheader("📄 识别结果")
+    text_placeholder = st.empty()
+    table_placeholder = st.empty()
+
+
+# ---------------------------
+# 处理逻辑
+# ---------------------------
 if uploaded_file:
     image = Image.open(uploaded_file)
+    image_placeholder.image(image, use_container_width=True)
 
-    col1, col2 = st.columns(2)
+    raw_text = extract_text_from_image(image)
 
-    with col1:
-        st.image(image, caption="上传的收据", use_container_width=True)
+    text_placeholder.text_area(
+        "OCR识别文本",
+        raw_text,
+        height=250
+    )
 
-    with col2:
-        st.subheader("OCR识别文本")
-        raw_text = extract_text_from_image(image)
-        st.text_area("识别结果", raw_text, height=300)
-
-    st.divider()
-
-    st.subheader("📊 分类结果")
     df = parse_items(raw_text)
 
-    if len(df) > 0:
-        st.dataframe(df, use_container_width=True)
-    else:
-        st.warning("未识别到有效商品数据")
+    st.markdown("### 📊 分类表格")
+    table_placeholder.dataframe(df, use_container_width=True)
+
+else:
+    image_placeholder.info("请上传一张收据图片")
+    text_placeholder.info("识别内容将在这里显示")
