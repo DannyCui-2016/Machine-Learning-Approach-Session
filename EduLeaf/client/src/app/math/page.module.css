@@ -1,0 +1,212 @@
+/* ============================================
+   Math Module Page – EduLeaf
+   ============================================ */
+
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+/* ── Header ── */
+.header {
+  position: relative;
+  background: linear-gradient(150deg, #E8F5E9 0%, #F3E5F5 100%);
+  padding: var(--space-3xl) 0 var(--space-2xl);
+  overflow: hidden;
+  text-align: center;
+}
+
+.headerBlob1 {
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(76,175,80,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.headerBlob2 {
+  position: absolute;
+  bottom: -60px;
+  left: -60px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(123,31,162,0.12) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.title {
+  font-size: var(--font-size-4xl);
+  font-weight: 800;
+  margin: var(--space-md) 0 var(--space-sm);
+  background: linear-gradient(135deg, #2E7D32, #7B1FA2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  max-width: 600px;
+  margin: 0 auto var(--space-lg);
+}
+
+.comingSoonBanner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--color-accent-pale);
+  border: 1px solid var(--color-accent-light);
+  color: var(--color-warning);
+  border-radius: var(--radius-full);
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.comingIcon { font-size: 1.1rem; }
+
+/* ── Groups Section ── */
+.groupsSection {
+  padding: var(--space-2xl) 0 var(--space-3xl);
+}
+
+.group {
+  margin-bottom: var(--space-2xl);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.groupIcon { font-size: 1.75rem; }
+
+.groupTitle {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  margin: 0;
+}
+
+.groupDivider {
+  flex: 1;
+  height: 2px;
+  border-radius: var(--radius-full);
+  opacity: 0.3;
+}
+
+/* ── Years Grid ── */
+.yearsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-md);
+}
+
+.yearCard {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-border-light);
+  padding: var(--space-lg);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.yearCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--year-color, var(--color-primary));
+  opacity: 0.6;
+  transition: opacity var(--transition-base);
+}
+
+.yearCard:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+  border-color: var(--year-color, var(--color-primary-lighter));
+}
+
+.yearCard:hover::before {
+  opacity: 1;
+}
+
+.yearBadge {
+  display: inline-block;
+  color: #fff;
+  border-radius: var(--radius-full);
+  padding: 4px 14px;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+}
+
+.yearTopics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--space-md);
+}
+
+.topicTag {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+  font-size: var(--font-size-xs);
+  border: 1px solid var(--color-border-light);
+}
+
+.comingSoonTag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+  border-top: 1px solid var(--color-border-light);
+  padding-top: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+/* ── CTA Section ── */
+.ctaSection {
+  background: linear-gradient(135deg, #E8F5E9 0%, #FAFFF7 100%);
+  padding: var(--space-2xl) 0;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.ctaCard {
+  text-align: center;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.ctaEmoji { font-size: 3rem; display: block; margin-bottom: var(--space-md); }
+
+.ctaTitle {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+}
+
+.ctaDesc {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-lg);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .title { font-size: var(--font-size-3xl); }
+  .yearsGrid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .groupHeader { flex-wrap: wrap; }
+  .groupDivider { display: none; }
+}
