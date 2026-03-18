@@ -63,11 +63,11 @@ router.post('/generate-from-file', upload.single('file'), async (req, res, next)
     ${textContent.substring(0, 4000)}
     ---
 
-    Generate an exam with these sections:
-    - multipleChoice: 5 questions (options: A, B, C, D), 4 points each.
-    - fillIn: 3 fill-in-the-blank questions (provide the exactly 1-2 word answer), 4 points each.
-    - reading: 2 reading comprehension questions. Write a "passage" of 2-3 sentences taken from the text. Do NOT include the answer in the passage. The "answer" field should be a short phrase (2-5 words) that answers the question but does NOT appear verbatim in the passage. 10 points each.
-    - writing: 1 writing prompt related to the text, 20 points.
+    Generate an exam with exactly these 4 sections totaling 100 points:
+    1. multipleChoice: 10 questions (options: A, B, C, D), 4 points each (Total 40).
+    2. fillIn: 10 fill-in-the-blank questions (provide the exactly 1-2 word answer), 3 points each (Total 30).
+    3. trueFalse: 10 true or false questions based on the text. The answer must be "True" or "False", 2 points each (Total 20).
+    4. translation: 5 short sentences from the text to translate. If the text is English, translate it to ${subject}. If the text is in ${subject}, translate to English. The answer should be the translated text, 2 points each (Total 10).
 
     Respond ONLY with valid JSON in this exact structure, with no markdown formatting around it:
     {
@@ -77,13 +77,13 @@ router.post('/generate-from-file', upload.single('file'), async (req, res, next)
           { "id": "mc1", "type": "mc", "question": "...", "options": ["...", "...", "...", "..."], "answer": "A", "points": 4 }
         ],
         "fillIn": [
-          { "id": "fi1", "type": "fill", "question": "...", "answer": "...", "points": 4 }
+          { "id": "fi1", "type": "fill", "question": "...", "answer": "...", "points": 3 }
         ],
-        "reading": [
-          { "id": "r1", "type": "reading", "passage": "...", "question": "...", "answer": "...", "points": 10 }
+        "trueFalse": [
+          { "id": "tf1", "type": "tf", "question": "...", "answer": "True", "points": 2 }
         ],
-        "writing": [
-          { "id": "w1", "type": "writing", "question": "...", "rubric": "...", "minWords": 50, "answer": "", "points": 20 }
+        "translation": [
+          { "id": "tr1", "type": "translation", "question": "...", "answer": "...", "points": 2 }
         ]
       }
     }
@@ -133,12 +133,29 @@ router.post('/generate-auto', async (req, res, next) => {
 // ── GET /api/exams/history ────────────────────────────────────────────────────
 router.get('/history', async (req, res, next) => {
   try {
+    const { subject } = req.query;
+    const examInclude = {
+      association: 'exam',
+      attributes: ['title', 'subject', 'level']
+    };
+    if (subject) {
+      examInclude.where = { subject };
+    }
     const records = await ExamRecord.findAll({
-      include: [{ association: 'exam', attributes: ['title', 'subject', 'level'] }],
+      include: [examInclude],
       order: [['createdAt', 'DESC']],
       limit: 20,
     });
     res.json(records);
+  } catch (err) { next(err); }
+});
+
+// ── GET /api/exams/records/:id ───────────────────────────────────────────────
+router.get('/records/:id', async (req, res, next) => {
+  try {
+    const record = await ExamRecord.findByPk(req.params.id, { include: ['exam'] });
+    if (!record) return res.status(404).json({ error: 'Record not found' });
+    res.json(record);
   } catch (err) { next(err); }
 });
 
@@ -165,9 +182,7 @@ router.post('/:id/submit', async (req, res, next) => {
         total += q.points || 0;
         const ua = (answers[q.id] || '').toString().trim().toLowerCase();
         const ca = (q.answer || '').toString().trim().toLowerCase();
-        if (q.type === 'writing') {
-          if (ua.split(' ').length >= (q.minWords || 50) * 0.5) earned += (q.points || 0) * 0.6;
-        } else if (q.type === 'mc') {
+        if (q.type === 'mc' || q.type === 'tf') {
           if (ua === ca) earned += q.points || 0;
         } else {
           if (ua && (ua.includes(ca) || ca.includes(ua))) earned += q.points || 0;
@@ -194,7 +209,7 @@ router.post('/:id/verify-section', async (req, res, next) => {
     qs.forEach((q) => {
       const ua = (answers[q.id] || '').toString().trim().toLowerCase();
       const ca = (q.answer || '').toString().trim().toLowerCase();
-      const ok = q.type === 'mc' ? ua === ca : (ua.includes(ca) || ca.includes(ua));
+      const ok = (q.type === 'mc' || q.type === 'tf') ? ua === ca : (ua.includes(ca) || ca.includes(ua));
       details[q.id] = ok;
       if (ok) correct++;
     });
