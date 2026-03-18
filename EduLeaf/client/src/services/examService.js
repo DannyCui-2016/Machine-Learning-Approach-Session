@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002',
   timeout: 30000,
 });
 
@@ -116,7 +116,11 @@ export async function generateExamFromFile(file, subject) {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('subject', subject);
-  const { data } = await API.post('/api/exams/generate-from-file', formData);
+  const { data } = await API.post('/api/exams/generate-from-file', formData,{
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return data;
 }
 

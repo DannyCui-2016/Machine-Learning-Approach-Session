@@ -9,23 +9,23 @@ import styles from './page.module.css';
 
 const SECTIONS = [
   { key: 'multipleChoice', icon: '☑️', labelKey: 'exam_page.multiple_choice' },
-  { key: 'fillIn',         icon: '✏️', labelKey: 'exam_page.fill_in'         },
-  { key: 'listening',      icon: '🎧', labelKey: 'exam_page.listening'       },
-  { key: 'reading',        icon: '📖', labelKey: 'exam_page.reading'         },
-  { key: 'writing',        icon: '📝', labelKey: 'exam_page.writing'         },
+  { key: 'fillIn', icon: '✏️', labelKey: 'exam_page.fill_in' },
+  { key: 'listening', icon: '🎧', labelKey: 'exam_page.listening' },
+  { key: 'reading', icon: '📖', labelKey: 'exam_page.reading' },
+  { key: 'writing', icon: '📝', labelKey: 'exam_page.writing' },
 ];
 
 export default function ExamPage() {
   const { subject, id } = useParams();
   const { t } = useLanguage();
 
-  const [exam, setExam]           = useState(null);
-  const [loading, setLoading]     = useState(true);
-  const [answers, setAnswers]     = useState({});
+  const [exam, setExam] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [answers, setAnswers] = useState({});
   const [favorites, setFavorites] = useState(new Set());
-  const [verified, setVerified]   = useState({});
+  const [verified, setVerified] = useState({});
   const [submitted, setSubmitted] = useState(false);
-  const [result, setResult]       = useState(null);
+  const [result, setResult] = useState(null);
   const [activeSection, setActiveSection] = useState('multipleChoice');
   const [sectionVerifyResult, setSectionVerifyResult] = useState({});
 
@@ -314,9 +314,8 @@ function QuestionCard({ q, qIdx, sectionKey, answers, setAnswer, favorites, togg
 
   return (
     <div
-      className={`${styles.questionCard} ${
-        hasVerify ? (verifyResult ? styles.questionCorrect : styles.questionWrong) : ''
-      }`}
+      className={`${styles.questionCard} ${hasVerify ? (verifyResult ? styles.questionCorrect : styles.questionWrong) : ''
+        }`}
     >
       <div className={styles.questionHeader}>
         <span className={styles.questionNum}>Q{qIdx + 1}</span>
@@ -332,7 +331,7 @@ function QuestionCard({ q, qIdx, sectionKey, answers, setAnswer, favorites, togg
 
       {/* Reading passage */}
       {q.passage && (
-        <div className={styles.passage}>{q.passage}</div>
+        <div className={styles.passage}>{q.passage?.split('\n')[0]}</div>
       )}
 
       {/* Listening audio */}
@@ -353,13 +352,12 @@ function QuestionCard({ q, qIdx, sectionKey, answers, setAnswer, favorites, togg
               <button
                 key={letter}
                 disabled={submitted}
-                className={`${styles.optionBtn} ${isSelected ? styles.optionSelected : ''} ${
-                  hasVerify && isCorrect ? styles.optionCorrect : ''
-                } ${hasVerify && isSelected && !isCorrect ? styles.optionWrong : ''}`}
+                className={`${styles.optionBtn} ${isSelected ? styles.optionSelected : ''} ${hasVerify && isCorrect ? styles.optionCorrect : ''
+                  } ${hasVerify && isSelected && !isCorrect ? styles.optionWrong : ''}`}
                 onClick={() => setAnswer(q.id, letter)}
               >
                 <span className={styles.optionLetter}>{letter}</span>
-                <span>{opt}</span>
+                <span>{opt.replace(/^[A-D][.)]\s*/i, '')}</span>
               </button>
             );
           })}
@@ -370,9 +368,8 @@ function QuestionCard({ q, qIdx, sectionKey, answers, setAnswer, favorites, togg
       {q.type === 'fill' && (
         <div className={styles.fillWrap}>
           <input
-            className={`form-input ${styles.fillInput} ${
-              hasVerify ? (verifyResult ? styles.inputCorrect : styles.inputWrong) : ''
-            }`}
+            className={`form-input ${styles.fillInput} ${hasVerify ? (verifyResult ? styles.inputCorrect : styles.inputWrong) : ''
+              }`}
             type="text"
             placeholder={t('exam_page.your_answer')}
             value={userAns}
@@ -386,9 +383,8 @@ function QuestionCard({ q, qIdx, sectionKey, answers, setAnswer, favorites, togg
       {(q.type === 'listening' || q.type === 'reading') && (
         <div className={styles.fillWrap}>
           <textarea
-            className={`form-textarea ${styles.textAnswer} ${
-              hasVerify ? (verifyResult ? styles.inputCorrect : styles.inputWrong) : ''
-            }`}
+            className={`form-textarea ${styles.textAnswer} ${hasVerify ? (verifyResult ? styles.inputCorrect : styles.inputWrong) : ''
+              }`}
             placeholder={t('exam_page.your_answer')}
             value={userAns}
             onChange={(e) => setAnswer(q.id, e.target.value)}
@@ -455,7 +451,7 @@ function ListeningPlayer({ audioText, t }) {
     <div className={styles.audioPlayer}>
       <span className={styles.audioIcon}>🎧</span>
       <div className={styles.audioWave}>
-        {[1,2,3,4,5].map((i) => (
+        {[1, 2, 3, 4, 5].map((i) => (
           <span key={i} className={`${styles.audioBar} ${playing ? styles.audioBarPlaying : ''}`} style={{ animationDelay: `${i * 0.1}s` }} />
         ))}
       </div>
