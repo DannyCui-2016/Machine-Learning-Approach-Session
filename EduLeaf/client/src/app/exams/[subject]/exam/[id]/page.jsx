@@ -2,21 +2,22 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useLanguage } from '../../../../../contexts/LanguageContext';
-import { getExam, submitExam, verifySection, addFavorite, removeFavorite } from '../../../../../services/examService';
+import { getExam, getExamRecord, submitExam, verifySection, addFavorite, removeFavorite } from '../../../../../services/examService';
 import styles from './page.module.css';
 
 const SECTIONS = [
   { key: 'multipleChoice', icon: '☑️', labelKey: 'exam_page.multiple_choice' },
   { key: 'fillIn', icon: '✏️', labelKey: 'exam_page.fill_in' },
-  { key: 'listening', icon: '🎧', labelKey: 'exam_page.listening' },
-  { key: 'reading', icon: '📖', labelKey: 'exam_page.reading' },
-  { key: 'writing', icon: '📝', labelKey: 'exam_page.writing' },
+  { key: 'trueFalse', icon: '⚖️', labelKey: 'exam_page.true_false' },
+  { key: 'translation', icon: '🌐', labelKey: 'exam_page.translation' },
 ];
 
 export default function ExamPage() {
   const { subject, id } = useParams();
+  const searchParams = useSearchParams();
+  const recordId = searchParams.get('recordId');
   const { t } = useLanguage();
 
   const [exam, setExam] = useState(null);
@@ -38,6 +39,15 @@ export default function ExamPage() {
       try {
         const data = await getExam(id);
         setExam(data);
+
+        if (recordId) {
+          const record = await getExamRecord(recordId);
+          if (record && record.answersJson) {
+            const ans = JSON.parse(record.answersJson);
+            setAnswers(ans);
+            reviewAnswers(data, ans);
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -91,6 +101,41 @@ export default function ExamPage() {
     setFavorites(next);
   }, [favorites]);
 
+  const reviewAnswers = useCallback((examData, ans) => {
+    let earned = 0;
+    let total = 0;
+    const newSectionVerifyResult = {};
+    const newVerified = {};
+
+    Object.entries(examData.sections).forEach(([sectionKey, qs]) => {
+      let correct = 0;
+      const details = {};
+      qs.forEach((q) => {
+        total += q.points || 0;
+        const userAns = (ans[q.id] || '').toString().trim().toLowerCase();
+        const correctAns = (q.answer || '').toString().trim().toLowerCase();
+        
+        const isOk = (q.type === 'mc' || q.type === 'tf')
+          ? userAns === correctAns
+          : !!userAns && (userAns.includes(correctAns) || correctAns.includes(userAns));
+
+        details[q.id] = isOk;
+        if (isOk) {
+          correct++;
+          earned += q.points || 0;
+        }
+      });
+      newSectionVerifyResult[sectionKey] = details;
+      newVerified[sectionKey] = { correct, total: qs.length };
+    });
+
+    setSectionVerifyResult(newSectionVerifyResult);
+    setVerified(newVerified);
+    const score = Math.round((earned / total) * 100);
+    setResult({ score, total: 100 });
+    setSubmitted(true);
+  }, []);
+
   // ── Verify section ─────────────────────────────────────────────────────────
   const handleVerifySection = useCallback(async (sectionKey) => {
     if (!exam) return;
@@ -100,7 +145,7 @@ export default function ExamPage() {
     sectionQs.forEach((q) => {
       const userAns = (answers[q.id] || '').toString().trim().toLowerCase();
       const correctAns = (q.answer || '').toString().trim().toLowerCase();
-      const isOk = q.type === 'mc'
+      const isOk = (q.type === 'mc' || q.type === 'tf')
         ? userAns === correctAns
         : userAns.includes(correctAns) || correctAns.includes(userAns);
       details[q.id] = isOk;
@@ -113,30 +158,10 @@ export default function ExamPage() {
   // ── Submit exam ────────────────────────────────────────────────────────────
   const handleSubmit = useCallback(async () => {
     if (!exam) return;
-    const res = await submitExam(exam.id, answers);
-    // Calculate client-side score
-    let earned = 0;
-    let total = 0;
-    Object.values(exam.sections).forEach((qs) => {
-      qs.forEach((q) => {
-        total += q.points || 0;
-        const userAns = (answers[q.id] || '').toString().trim().toLowerCase();
-        const correctAns = (q.answer || '').toString().trim().toLowerCase();
-        if (q.type === 'writing') {
-          // Writing: award half points if answered
-          if (userAns.split(' ').length >= (q.minWords || 0) * 0.5) earned += (q.points || 0) * 0.6;
-        } else if (q.type === 'mc') {
-          if (userAns === correctAns) earned += q.points || 0;
-        } else {
-          if (userAns && (userAns.includes(correctAns) || correctAns.includes(userAns))) earned += q.points || 0;
-        }
-      });
-    });
-    const score = Math.round((earned / total) * 100);
-    setResult({ score, total: 100 });
-    setSubmitted(true);
+    await submitExam(exam.id, answers);
+    reviewAnswers(exam, answers);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [exam, answers]);
+  }, [exam, answers, reviewAnswers]);
 
   // ── Render helpers ─────────────────────────────────────────────────────────
   if (loading) {
@@ -379,8 +404,29 @@ function QuestionCard({ q, qIdx, sectionKey, answers, setAnswer, favorites, togg
         </div>
       )}
 
-      {/* Listening / Reading – text answer */}
-      {(q.type === 'listening' || q.type === 'reading') && (
+      {/* True / False */}
+      {q.type === 'tf' && (
+        <div className={styles.optionsGrid}>
+          {['True', 'False'].map((opt) => {
+            const isSelected = userAns === opt.toLowerCase();
+            const isCorrect = opt.toLowerCase() === (q.answer || '').toLowerCase();
+            return (
+              <button
+                key={opt}
+                disabled={submitted}
+                className={`${styles.optionBtn} ${isSelected ? styles.optionSelected : ''} ${hasVerify && isCorrect ? styles.optionCorrect : ''
+                  } ${hasVerify && isSelected && !isCorrect ? styles.optionWrong : ''}`}
+                onClick={() => setAnswer(q.id, opt.toLowerCase())}
+              >
+                <span>{opt}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Translation */}
+      {q.type === 'translation' && (
         <div className={styles.fillWrap}>
           <textarea
             className={`form-textarea ${styles.textAnswer} ${hasVerify ? (verifyResult ? styles.inputCorrect : styles.inputWrong) : ''
@@ -394,26 +440,8 @@ function QuestionCard({ q, qIdx, sectionKey, answers, setAnswer, favorites, togg
         </div>
       )}
 
-      {/* Writing */}
-      {q.type === 'writing' && (
-        <div>
-          {q.rubric && <div className={styles.rubric}>📋 Rubric: {q.rubric}</div>}
-          <textarea
-            className={`form-textarea ${styles.writingAnswer}`}
-            placeholder={`Write at least ${q.minWords || 50} words…`}
-            value={userAns}
-            onChange={(e) => setAnswer(q.id, e.target.value)}
-            disabled={submitted}
-            rows={8}
-          />
-          <div className={styles.wordCount}>
-            Words: {(userAns || '').split(/\s+/).filter(Boolean).length} / {q.minWords || 50} min
-          </div>
-        </div>
-      )}
-
       {/* Show correct answer after verify */}
-      {hasVerify && !verifyResult && q.answer && q.type !== 'writing' && (
+      {hasVerify && !verifyResult && q.answer && (
         <div className={styles.modelAnswer}>
           💡 {t('exam_page.model_answer')}: <strong>{q.answer}</strong>
         </div>
@@ -428,39 +456,3 @@ function QuestionCard({ q, qIdx, sectionKey, answers, setAnswer, favorites, togg
   );
 }
 
-// ── Listening player (uses browser TTS) ────────────────────────────────────────
-function ListeningPlayer({ audioText, t }) {
-  const [playing, setPlaying] = useState(false);
-
-  const play = () => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(audioText);
-    utt.rate = 0.9;
-    utt.onstart = () => setPlaying(true);
-    utt.onend = () => setPlaying(false);
-    window.speechSynthesis.speak(utt);
-  };
-
-  const stop = () => {
-    window.speechSynthesis?.cancel();
-    setPlaying(false);
-  };
-
-  return (
-    <div className={styles.audioPlayer}>
-      <span className={styles.audioIcon}>🎧</span>
-      <div className={styles.audioWave}>
-        {[1, 2, 3, 4, 5].map((i) => (
-          <span key={i} className={`${styles.audioBar} ${playing ? styles.audioBarPlaying : ''}`} style={{ animationDelay: `${i * 0.1}s` }} />
-        ))}
-      </div>
-      <button
-        className={`btn btn-secondary btn-sm ${styles.playBtn}`}
-        onClick={playing ? stop : play}
-      >
-        {playing ? '⏹ Stop' : `▶ ${t('exam_page.listen_btn')}`}
-      </button>
-    </div>
-  );
-}

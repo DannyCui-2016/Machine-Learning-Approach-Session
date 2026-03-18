@@ -125,10 +125,9 @@ QUESTION_BANK: Dict[str, Dict[str, Any]] = {
 # ─────────────────────────────────────────────────────────────────────────────
 POINTS = {
     "multipleChoice": 4,
-    "fillIn": 4,
-    "listening": 5,
-    "reading": 10,
-    "writing": 20,
+    "fillIn": 3,
+    "trueFalse": 2,
+    "translation": 2,
 }
 
 
@@ -157,32 +156,20 @@ def _format_section(raw_questions: list, type_key: str) -> list:
                 "answer":   q["ans"],
                 "points":   POINTS[type_key],
             })
-        elif type_key == "listening":
+        elif type_key == "trueFalse":
             formatted.append({
                 "id":        _make_id(),
-                "type":      "listening",
-                "audioText": q["audio"],
-                "question":  q["q"],
-                "answer":    q["ans"],
+                "type":      "tf",
+                "question":  q.get("q", ""),
+                "answer":    q.get("ans", "True"),
                 "points":    POINTS[type_key],
             })
-        elif type_key == "reading":
+        elif type_key == "translation":
             formatted.append({
                 "id":       _make_id(),
-                "type":     "reading",
-                "passage":  q["passage"],
-                "question": q["q"],
-                "answer":   q["ans"],
-                "points":   POINTS[type_key],
-            })
-        elif type_key == "writing":
-            formatted.append({
-                "id":       _make_id(),
-                "type":     "writing",
-                "question": q["q"],
-                "rubric":   q.get("rubric", ""),
-                "minWords": q.get("minWords", 50),
-                "answer":   "",
+                "type":     "translation",
+                "question": q.get("q", ""),
+                "answer":   q.get("ans", ""),
                 "points":   POINTS[type_key],
             })
     return formatted
@@ -197,7 +184,7 @@ def generate_auto(subject: str, level: str) -> dict:
     level_data = bank.get(level, bank.get("beginner-1", {}))
 
     sections = {}
-    for section_key in ["multipleChoice", "fillIn", "listening", "reading", "writing"]:
+    for section_key in ["multipleChoice", "fillIn", "trueFalse", "translation"]:
         raw = level_data.get(section_key, [])
         if raw:
             sections[section_key] = _format_section(raw, section_key)
@@ -222,8 +209,6 @@ def generate_from_text(text: str, subject: str) -> dict:
 
     mc_questions      = _build_mc_from_sentences(sentences[:10], subject)
     fill_questions    = _build_fill_from_sentences(sentences[10:16])
-    reading_questions = _build_reading(sentences[16:30])
-    writing_questions = _build_writing(subject)
 
     subject_names = {"spanish": "Spanish", "german": "German", "english-pte": "English PTE"}
     return {
@@ -233,8 +218,6 @@ def generate_from_text(text: str, subject: str) -> dict:
         "sections": {
             "multipleChoice": mc_questions,
             "fillIn":         fill_questions,
-            "reading":        reading_questions,
-            "writing":        writing_questions,
         },
     }
 

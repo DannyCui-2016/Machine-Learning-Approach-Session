@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useDropzone } from 'react-dropzone';
@@ -25,11 +25,7 @@ const LEVELS = [
   { id: 'advanced-3',     label: 'Advanced 3'           },
 ];
 
-const MOCK_HISTORY = [
-  { id: '1', title: 'Spanish Exam – Beginner 1', score: 82, total: 100, date: '2024-03-10', questions: 25 },
-  { id: '2', title: 'Spanish Exam – Intermediate 1', score: 74, total: 100, date: '2024-03-07', questions: 30 },
-  { id: '3', title: 'Spanish File Exam', score: 91, total: 100, date: '2024-03-01', questions: 20 },
-];
+
 
 export default function SubjectPage({ params }) {
   const { subject } = params;
@@ -41,6 +37,22 @@ export default function SubjectPage({ params }) {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [dashTab, setDashTab] = useState('history');
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      setLoadingHistory(true);
+      try {
+        const data = await getHistory(subject);
+        setHistory(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingHistory(false);
+      }
+    })();
+  }, [subject]);
 
   const onDrop = useCallback((accepted) => {
     if (accepted[0]) setUploadedFile(accepted[0]);
@@ -221,14 +233,16 @@ export default function SubjectPage({ params }) {
 
             {dashTab === 'history' && (
               <div className={styles.historyList}>
-                {MOCK_HISTORY.length === 0 ? (
+                {loadingHistory ? (
+                  <div className={styles.empty}>{t('common.loading')}</div>
+                ) : history.length === 0 ? (
                   <div className={styles.empty}>{t('exam.history_empty')}</div>
                 ) : (
-                  MOCK_HISTORY.map((item) => (
+                  history.map((item) => (
                     <div key={item.id} className={styles.historyItem}>
                       <div className={styles.historyMeta}>
-                        <span className={styles.historyTitle}>{item.title}</span>
-                        <span className={styles.historyDate}>{item.date}</span>
+                        <span className={styles.historyTitle}>{item.exam?.title || 'Exam'}</span>
+                        <span className={styles.historyDate}>{new Date(item.createdAt).toLocaleDateString()}</span>
                       </div>
                       <div className={styles.historyScore}>
                         <div className={styles.scoreBar}>
@@ -241,7 +255,7 @@ export default function SubjectPage({ params }) {
                       </div>
                       <div className={styles.historyActions}>
                         <Link
-                          href={`/exams/${subject}/exam/${item.id}`}
+                          href={`/exams/${subject}/exam/${item.examId || item.exam?.id}?recordId=${item.id}`}
                           className="btn btn-ghost btn-sm"
                         >
                           {t('exam.review_btn')}

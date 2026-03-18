@@ -69,41 +69,23 @@ function generateMockExam(subject, level) {
           answer: 'tienes', points: 4,
         },
       ],
-      listening: [
+      trueFalse: [
         {
-          id: 'li1', type: 'listening',
-          audioText: 'Hola, me llamo Carlos. Tengo veinte años y soy de España.',
-          question: 'What is the speaker\'s name and age?',
-          answer: 'Carlos, 20 years old', points: 5,
+          id: 'tf1', type: 'tf',
+          question: 'The capital of Spain is Madrid.',
+          answer: 'True', points: 2,
         },
         {
-          id: 'li2', type: 'listening',
-          audioText: 'Hoy hace mucho calor. Voy a la playa con mis amigos.',
-          question: 'Where is the speaker going and with whom?',
-          answer: 'To the beach with friends', points: 5,
+          id: 'tf2', type: 'tf',
+          question: 'Spanish is the only official language in Spain.',
+          answer: 'False', points: 2,
         },
       ],
-      reading: [
+      translation: [
         {
-          id: 'ri1', type: 'reading',
-          passage: `Mi familia es muy grande. Tengo dos hermanos y una hermana. Mi padre se llama Juan y mi madre se llama Ana. Vivimos en una casa grande en Madrid. Los fines de semana, vamos al parque juntos.`,
-          question: 'How many siblings does the author have?',
-          answer: 'Three (two brothers and one sister)', points: 10,
-        },
-        {
-          id: 'ri2', type: 'reading',
-          passage: `Mi familia es muy grande. Tengo dos hermanos y una hermana. Mi padre se llama Juan y mi madre se llama Ana. Vivimos en una casa grande en Madrid. Los fines de semana, vamos al parque juntos.`,
-          question: 'What does the family do on weekends?',
-          answer: 'They go to the park together', points: 10,
-        },
-      ],
-      writing: [
-        {
-          id: 'wi1', type: 'writing',
-          question: 'Write a short paragraph (50–80 words) describing your daily routine in Spanish. Include at least 5 verbs.',
-          rubric: 'Vocabulary variety (4pts), Grammar accuracy (4pts), Verb usage (4pts), Coherence (4pts), Word count (4pts)',
-          minWords: 50,
-          answer: '', points: 20,
+          id: 'tr1', type: 'translation',
+          question: 'I love learning new languages.',
+          answer: 'Me encanta aprender nuevos idiomas.', points: 2,
         },
       ],
     },
@@ -181,9 +163,19 @@ export async function removeFavorite(questionId) {
   }
 }
 
-export async function getHistory() {
+export async function getExamRecord(id) {
   try {
-    const { data } = await API.get('/api/exams/history');
+    const { data } = await API.get(`/api/exams/records/${id}`);
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export async function getHistory(subject) {
+  try {
+    const params = subject ? { subject } : {};
+    const { data } = await API.get('/api/exams/history', { params });
     return data;
   } catch {
     return [];
