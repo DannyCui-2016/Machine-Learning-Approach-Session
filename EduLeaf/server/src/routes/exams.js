@@ -26,6 +26,9 @@ const ML_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
 // ── POST /api/exams/generate-from-file ───────────────────────────────────────
 router.post('/generate-from-file', upload.single('file'), async (req, res, next) => {
+    console.log('✅ /generate-from-file route hit');
+    console.log('File received:', req.file);
+    console.log('Body received:', req.body);
   try {
     const { subject } = req.body;
     const file = req.file;
@@ -46,52 +49,48 @@ router.post('/generate-from-file', upload.single('file'), async (req, res, next)
     if (!textContent || textContent.trim().length < 50) {
       return res.status(422).json({ error: 'Could not extract enough text from the file. Please ensure it is a text-based PDF.' });
     }
-
-    const { OpenAI } = require('openai');
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); // Note: Needs OPENAI_API_KEY env var
+    // const Anthropic = require('@anthropic-ai/sdk');
+    // const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
-You are an expert exam generator. Create a structured exam based *strictly* on the following text extracted from a document. The subject is "${subject}".
+    You are an expert exam generator. Create a structured exam based *strictly* on the following text extracted from a document. The subject is "${subject}".
 
-Extracted Text:
----
-${textContent.substring(0, 4000)} // Limiting to avoid huge token counts
----
+    Extracted Text:
+    ---
+    ${textContent.substring(0, 4000)}
+    ---
 
-Generate an exam with these sections:
-- multipleChoice: 5 questions (options: A, B, C, D), 4 points each.
-- fillIn: 3 fill-in-the-blank questions (provide the exactly 1-2 word answer), 4 points each.
-- reading: 2 reading comprehension questions based on a short passage from the text, 10 points each.
-- writing: 1 writing prompt related to the text, 20 points.
+    Generate an exam with these sections:
+    - multipleChoice: 5 questions (options: A, B, C, D), 4 points each.
+    - fillIn: 3 fill-in-the-blank questions (provide the exactly 1-2 word answer), 4 points each.
+    - reading: 2 reading comprehension questions. Write a "passage" of 2-3 sentences taken from the text. Do NOT include the answer in the passage. The "answer" field should be a short phrase (2-5 words) that answers the question but does NOT appear verbatim in the passage. 10 points each.
+    - writing: 1 writing prompt related to the text, 20 points.
 
-Respond ONLY with valid JSON in this exact structure, with no markdown formatting around it:
-{
-  "title": "Exam based on Document",
-  "sections": {
-    "multipleChoice": [
-      { "id": "mc1", "type": "mc", "question": "...", "options": ["...", "...", "...", "..."], "answer": "A", "points": 4 }
-    ],
-    "fillIn": [
-      { "id": "fi1", "type": "fill", "question": "...", "answer": "...", "points": 4 }
-    ],
-    "reading": [
-       { "id": "r1", "type": "reading", "passage": "...", "question": "...", "answer": "...", "points": 10 }
-    ],
-    "writing": [
-      { "id": "w1", "type": "writing", "question": "...", "rubric": "...", "minWords": 50, "answer": "", "points": 20 }
-    ]
-  }
-}
-`;
+    Respond ONLY with valid JSON in this exact structure, with no markdown formatting around it:
+    {
+      "title": "Exam based on Document",
+      "sections": {
+        "multipleChoice": [
+          { "id": "mc1", "type": "mc", "question": "...", "options": ["...", "...", "...", "..."], "answer": "A", "points": 4 }
+        ],
+        "fillIn": [
+          { "id": "fi1", "type": "fill", "question": "...", "answer": "...", "points": 4 }
+        ],
+        "reading": [
+          { "id": "r1", "type": "reading", "passage": "...", "question": "...", "answer": "...", "points": 10 }
+        ],
+        "writing": [
+          { "id": "w1", "type": "writing", "question": "...", "rubric": "...", "minWords": 50, "answer": "", "points": 20 }
+        ]
+      }
+    }
+    `;
 
-    const completion = await openai.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
-      model: "gpt-4o-mini",
-      response_format: { type: "json_object" },
-    });
-
-    const mlResult = JSON.parse(completion.choices[0].message.content);
-
+    const result = await model.generateContent(prompt);
+    const mlResult = JSON.parse(result.response.text());
     // Persist exam
     const exam = await Exam.create({
       title:       mlResult.title || `${subject} Exam – File`,
@@ -102,7 +101,8 @@ Respond ONLY with valid JSON in this exact structure, with no markdown formattin
 
     res.json({ id: exam.id, title: exam.title, subject, sections: mlResult.sections });
   } catch (err) {
-    console.error("Error in generate-from-file:", err);
+    console.error('❌ Error in generate-from-file:', err);
+    console.error('Full error:', err.stack); 
     next(err);
   }
 });
