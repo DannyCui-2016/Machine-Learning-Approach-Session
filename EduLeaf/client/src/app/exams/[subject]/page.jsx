@@ -8,21 +8,21 @@ import { generateExamFromFile, generateExamAuto, getHistory, getFavorites } from
 import styles from './page.module.css';
 
 const SUBJECT_META = {
-  spanish:      { flag: '🇪🇸', color: '#E91E63', key: 'spanish'      },
-  german:       { flag: '🇩🇪', color: '#1565C0', key: 'german'       },
-  'english-pte':{ flag: '🇬🇧', color: '#6A1B9A', key: 'english_pte'  },
+  spanish: { flag: '🇪🇸', color: '#E91E63', key: 'spanish' },
+  german: { flag: '🇩🇪', color: '#1565C0', key: 'german' },
+  'english-pte': { flag: '🇬🇧', color: '#6A1B9A', key: 'english_pte' },
 };
 
 const LEVELS = [
-  { id: 'beginner-1',     label: 'Beginner Level 1'     },
-  { id: 'beginner-2',     label: 'Beginner Level 2'     },
-  { id: 'beginner-3',     label: 'Beginner Level 3'     },
+  { id: 'beginner-1', label: 'Beginner Level 1' },
+  { id: 'beginner-2', label: 'Beginner Level 2' },
+  { id: 'beginner-3', label: 'Beginner Level 3' },
   { id: 'intermediate-1', label: 'Intermediate Level 1' },
   { id: 'intermediate-2', label: 'Intermediate Level 2' },
   { id: 'intermediate-3', label: 'Intermediate Level 3' },
-  { id: 'advanced-1',     label: 'Advanced 1'           },
-  { id: 'advanced-2',     label: 'Advanced 2'           },
-  { id: 'advanced-3',     label: 'Advanced 3'           },
+  { id: 'advanced-1', label: 'Advanced 1' },
+  { id: 'advanced-2', label: 'Advanced 2' },
+  { id: 'advanced-3', label: 'Advanced 3' },
 ];
 
 
@@ -181,8 +181,8 @@ export default function SubjectPage({ params }) {
                     const group = lv.id.startsWith('beginner')
                       ? 'beginner'
                       : lv.id.startsWith('intermediate')
-                      ? 'intermediate'
-                      : 'advanced';
+                        ? 'intermediate'
+                        : 'advanced';
                     return (
                       <button
                         key={lv.id}
@@ -238,28 +238,52 @@ export default function SubjectPage({ params }) {
                 ) : history.length === 0 ? (
                   <div className={styles.empty}>{t('exam.history_empty')}</div>
                 ) : (
-                  history.map((item) => (
-                    <div key={item.id} className={styles.historyItem}>
-                      <div className={styles.historyMeta}>
-                        <span className={styles.historyTitle}>{item.exam?.title || 'Exam'}</span>
-                        <span className={styles.historyDate}>{new Date(item.createdAt).toLocaleDateString()}</span>
-                      </div>
-                      <div className={styles.historyScore}>
-                        <div className={styles.scoreBar}>
-                          <div
-                            className={styles.scoreBarFill}
-                            style={{ width: `${item.score}%` }}
-                          />
-                        </div>
-                        <span className={styles.scoreVal}>{item.score}/{item.total}</span>
-                      </div>
-                      <div className={styles.historyActions}>
-                        <Link
-                          href={`/exams/${subject}/exam/${item.examId || item.exam?.id}?recordId=${item.id}`}
-                          className="btn btn-ghost btn-sm"
-                        >
-                          {t('exam.review_btn')}
-                        </Link>
+                  Object.entries(
+                    history.reduce((acc, item) => {
+                      const title = item.exam?.title || 'Exam';
+                      if (!acc[title]) acc[title] = [];
+                      acc[title].push(item);
+                      return acc;
+                    }, {})
+                  ).map(([title, items]) => (
+                    <div key={title} style={{ marginBottom: '1.5rem' }}>
+                      <h3 style={{
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                        marginBottom: '0.75rem',
+                        color: 'var(--text-main)',
+                        borderBottom: '1px solid var(--border-color)',
+                        paddingBottom: '0.5rem'
+                      }}>
+                        {title}
+                      </h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {items.map((item) => (
+                          <div key={item.id} className={styles.historyItem}>
+                            <div className={styles.historyMeta}>
+                              <span className={styles.historyDate}>
+                                {new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            <div className={styles.historyScore}>
+                              <div className={styles.scoreBar}>
+                                <div
+                                  className={styles.scoreBarFill}
+                                  style={{ width: `${item.score}%` }}
+                                />
+                              </div>
+                              <span className={styles.scoreVal}>{item.score}/{item.total}</span>
+                              <div style={{ marginLeft: 'auto' }}>
+                                <Link
+                                  href={`/exams/${subject}/exam/${item.examId || item.exam?.id}?recordId=${item.id}`}
+                                  className="btn btn-ghost btn-sm"
+                                >
+                                  {t('exam.review_btn')}
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))

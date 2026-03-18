@@ -46,7 +46,9 @@ app.use((err, req, res, _next) => {
 // ── Start ─────────────────────────────────────────────────────────────────────
 async function start() {
   try {
+    await sequelize.query('PRAGMA foreign_keys = OFF');
     await sequelize.sync({ alter: true });
+    await sequelize.query('PRAGMA foreign_keys = ON');
     console.log('✅ Database synced');
     app.listen(PORT, () => {
       console.log(`🚀 EduLeaf API running on http://localhost:${PORT}`);

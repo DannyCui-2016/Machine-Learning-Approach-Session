@@ -265,6 +265,7 @@
   overflow: hidden;
   position: sticky;
   top: 84px;
+  height:auto;
 }
 
 .dashHeader {
@@ -276,7 +277,7 @@
 .dashTitle {
   font-size: var(--font-size-lg);
   font-weight: 700;
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
   color: var(--color-text-primary);
 }
 
