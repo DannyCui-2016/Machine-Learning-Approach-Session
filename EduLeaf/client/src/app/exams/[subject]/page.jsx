@@ -292,17 +292,137 @@ export default function SubjectPage({ params }) {
             )}
 
             {dashTab === 'favorites' && (
-              <div className={styles.empty}>
-                <span style={{ fontSize: '2.5rem' }}>⭐</span>
-                <p>{t('exam.favorites_empty')}</p>
-                <Link href="/favorites" className="btn btn-secondary btn-sm">
-                  {t('nav.favorites')}
-                </Link>
+              <div style={{ overflowY: 'auto', flex: 1, padding: 'var(--space-md)' }}>
+                <FavoritesTab t={t} />
               </div>
             )}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function FavoritesTab({ t }) {
+  const [favorites, setFavorites] = useState([]);
+  const [pendingRemove, setPendingRemove] = useState({});
+
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
+    setFavorites(stored);
+  }, []);
+
+  const handleRemove = (id) => {
+    const timer = setTimeout(() => {
+      setFavorites((prev) => {
+        const updated = prev.filter((f) => f.id !== id);
+        localStorage.setItem('eduleaf-favorites', JSON.stringify(updated));
+        return updated;
+      });
+      setPendingRemove((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }, 5000);
+
+    setPendingRemove((prev) => ({ ...prev, [id]: timer }));
+  };
+
+  const handleUndo = (id) => {
+    clearTimeout(pendingRemove[id]);
+    setPendingRemove((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  if (favorites.length === 0) {
+    return (
+      <div className={styles.empty}>
+        <span style={{ fontSize: '2.5rem' }}>⭐</span>
+        <p>{t('exam.favorites_empty')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      {favorites.map((fav) => {
+        const isPending = !!pendingRemove[fav.id];
+        return (
+          <div key={fav.id} className={styles.historyItem} style={{
+            opacity: isPending ? 0.5 : 1,
+            transition: 'opacity 0.3s',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+              <p style={{ fontSize: '0.85rem', fontWeight: '600', flex: 1 }}>
+                {fav.question}
+              </p>
+              {isPending ? (
+                <button
+                  onClick={() => handleUndo(fav.id)}
+                  title="Undo"
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--color-border-light)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    color: 'var(--color-primary)',
+                    padding: '2px 8px',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  ↩ Undo
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleRemove(fav.id)}
+                  title="Got it, remove"
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--color-border-light)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    color: 'var(--color-text-muted)',
+                    padding: '2px 8px',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  ✓ Got it
+                </button>
+              )}
+            </div>
+            {fav.type === 'mc' && fav.options && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem' }}>
+                {fav.options.map((opt, i) => {
+                  const letter = String.fromCharCode(65 + i);
+                  const isCorrect = letter === fav.answer;
+                  return (
+                    <span key={letter} style={{
+                      fontSize: '0.8rem',
+                      color: isCorrect ? '#2E7D32' : 'var(--color-text-sub)',
+                      fontWeight: isCorrect ? '600' : '400',
+                    }}>
+                      {letter}. {opt.replace(/^[A-D][.)]\s*/i, '')} {isCorrect ? '✅' : ''}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            {fav.type !== 'mc' && fav.answer && (
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-sub)' }}>
+                💡 {fav.answer}
+              </p>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
