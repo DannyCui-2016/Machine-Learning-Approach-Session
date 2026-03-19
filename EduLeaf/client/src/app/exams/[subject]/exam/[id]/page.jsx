@@ -114,7 +114,6 @@ export default function ExamPage() {
         total += q.points || 0;
         const userAns = (ans[q.id] || '').toString().trim().toLowerCase();
         const correctAns = (q.answer || '').toString().trim().toLowerCase();
-
         const isOk = (q.type === 'mc' || q.type === 'tf')
           ? userAns === correctAns
           : !!userAns && (userAns.includes(correctAns) || correctAns.includes(userAns));
