@@ -106,16 +106,23 @@ router.post('/generate-from-file', upload.single('file'), async (req, res, next)
 
     const result = await model.generateContent(prompt);
     const mlResult = JSON.parse(result.response.text());
+    const examId = uuidv4();
+    Object.entries(mlResult.sections).forEach(([sectionKey, questions]) => {
+      questions.forEach((q, idx) => {
+        q.id = `${examId.slice(0, 8)}-${sectionKey}-${idx}`;
+      });
+    } );
     // Persist exam
     const originalFileName = file.originalname ? file.originalname.replace(/\.[^/.]+$/, "") : null;
     const finalTitle = originalFileName || `${subject} Exam – File`;
 
     const exam = await Exam.create({
+      id:          examId,
       title:       finalTitle,
       subject,
       source:      'file',
       sectionsJson: JSON.stringify(mlResult.sections),
-    });
+    }); 
 
     res.json({ id: exam.id, title: exam.title, subject, sections: mlResult.sections });
   } catch (err) {

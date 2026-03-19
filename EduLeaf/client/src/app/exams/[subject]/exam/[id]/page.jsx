@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useLanguage } from '../../../../../contexts/LanguageContext';
-import { getExam, getExamRecord, submitExam, verifySection, addFavorite, removeFavorite } from '../../../../../services/examService';
+import { getExam, getExamRecord, submitExam, verifySection, addFavorite, removeFavorite, getFavorites } from '../../../../../services/examService';
 import styles from './page.module.css';
 
 const SECTIONS = [
@@ -40,6 +40,9 @@ export default function ExamPage() {
         const data = await getExam(id);
         setExam(data);
 
+        const storedFavs = await getFavorites(subject);
+        setFavorites(new Set(storedFavs.map((f) => f.id)));
+
         if (recordId) {
           const record = await getExamRecord(recordId);
           if (record && record.answersJson) {
@@ -52,11 +55,6 @@ export default function ExamPage() {
         setLoading(false);
       }
     })();
-
-    // Restore favorites from localStorage
-    const storedFavs = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
-    const filtered = storedFavs.filter((f) => !f.subject || f.subject === subject);
-    setFavorites(new Set(filtered.map((f) => f.id)));
   }, [id]);
 
   // ── Scroll spy ─────────────────────────────────────────────────────────────
