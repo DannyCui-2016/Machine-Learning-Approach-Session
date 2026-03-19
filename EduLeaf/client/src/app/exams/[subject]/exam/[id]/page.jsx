@@ -114,7 +114,6 @@ export default function ExamPage() {
         total += q.points || 0;
         const userAns = (ans[q.id] || '').toString().trim().toLowerCase();
         const correctAns = (q.answer || '').toString().trim().toLowerCase();
-        
         const isOk = (q.type === 'mc' || q.type === 'tf')
           ? userAns === correctAns
           : !!userAns && (userAns.includes(correctAns) || correctAns.includes(userAns));
@@ -222,9 +221,28 @@ export default function ExamPage() {
               </p>
             </div>
             {!submitted && (
-              <button className={`btn btn-primary ${styles.submitBtn}`} onClick={handleSubmit}>
-                🎯 {t('exam_page.submit_exam')}
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {process.env.NODE_ENV === 'development' && (
+                  <button
+                    className={`btn btn-secondary ${styles.submitBtn}`}
+                    onClick={() => {
+                      const mockAns = {};
+                      Object.values(exam.sections).forEach(qs => {
+                        qs.forEach(q => {
+                          mockAns[q.id] = (q.type === 'mc') ? 'A' : (q.type === 'tf') ? 'true' : (q.answer || 'mock text');
+                        });
+                      });
+                      setAnswers(mockAns);
+                    }}
+                    title="Dev Only: Auto-fill answers"
+                  >
+                    ⚡ Auto-Fill
+                  </button>
+                )}
+                <button className={`btn btn-primary ${styles.submitBtn}`} onClick={handleSubmit}>
+                  🎯 {t('exam_page.submit_exam')}
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -319,9 +337,28 @@ export default function ExamPage() {
                 <p className={styles.finalHint}>
                   🎉 Ready? Review your answers above, then submit for your final score.
                 </p>
-                <button className="btn btn-primary btn-lg" onClick={handleSubmit}>
-                  🎯 {t('exam_page.submit_exam')}
-                </button>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                  {process.env.NODE_ENV === 'development' && (
+                    <button
+                      className="btn btn-secondary btn-lg"
+                      onClick={() => {
+                        const mockAns = {};
+                        Object.values(exam.sections).forEach(qs => {
+                          qs.forEach(q => {
+                            mockAns[q.id] = (q.type === 'mc') ? 'A' : (q.type === 'tf') ? 'true' : (q.answer || 'mock text');
+                          });
+                        });
+                        setAnswers(mockAns);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    >
+                      ⚡ Auto-Fill
+                    </button>
+                  )}
+                  <button className="btn btn-primary btn-lg" onClick={handleSubmit}>
+                    🎯 {t('exam_page.submit_exam')}
+                  </button>
+                </div>
               </div>
             )}
           </div>

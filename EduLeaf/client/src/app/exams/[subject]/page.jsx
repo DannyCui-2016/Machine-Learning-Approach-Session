@@ -8,21 +8,21 @@ import { generateExamFromFile, generateExamAuto, getHistory, getFavorites } from
 import styles from './page.module.css';
 
 const SUBJECT_META = {
-  spanish:      { flag: '🇪🇸', color: '#E91E63', key: 'spanish'      },
-  german:       { flag: '🇩🇪', color: '#1565C0', key: 'german'       },
-  'english-pte':{ flag: '🇬🇧', color: '#6A1B9A', key: 'english_pte'  },
+  spanish: { flag: '🇪🇸', color: '#E91E63', key: 'spanish' },
+  german: { flag: '🇩🇪', color: '#1565C0', key: 'german' },
+  'english-pte': { flag: '🇬🇧', color: '#6A1B9A', key: 'english_pte' },
 };
 
 const LEVELS = [
-  { id: 'beginner-1',     label: 'Beginner Level 1'     },
-  { id: 'beginner-2',     label: 'Beginner Level 2'     },
-  { id: 'beginner-3',     label: 'Beginner Level 3'     },
+  { id: 'beginner-1', label: 'Beginner Level 1' },
+  { id: 'beginner-2', label: 'Beginner Level 2' },
+  { id: 'beginner-3', label: 'Beginner Level 3' },
   { id: 'intermediate-1', label: 'Intermediate Level 1' },
   { id: 'intermediate-2', label: 'Intermediate Level 2' },
   { id: 'intermediate-3', label: 'Intermediate Level 3' },
-  { id: 'advanced-1',     label: 'Advanced 1'           },
-  { id: 'advanced-2',     label: 'Advanced 2'           },
-  { id: 'advanced-3',     label: 'Advanced 3'           },
+  { id: 'advanced-1', label: 'Advanced 1' },
+  { id: 'advanced-2', label: 'Advanced 2' },
+  { id: 'advanced-3', label: 'Advanced 3' },
 ];
 
 
@@ -181,8 +181,8 @@ export default function SubjectPage({ params }) {
                     const group = lv.id.startsWith('beginner')
                       ? 'beginner'
                       : lv.id.startsWith('intermediate')
-                      ? 'intermediate'
-                      : 'advanced';
+                        ? 'intermediate'
+                        : 'advanced';
                     return (
                       <button
                         key={lv.id}
@@ -238,28 +238,49 @@ export default function SubjectPage({ params }) {
                 ) : history.length === 0 ? (
                   <div className={styles.empty}>{t('exam.history_empty')}</div>
                 ) : (
-                  history.map((item) => (
-                    <div key={item.id} className={styles.historyItem}>
-                      <div className={styles.historyMeta}>
-                        <span className={styles.historyTitle}>{item.exam?.title || 'Exam'}</span>
-                        <span className={styles.historyDate}>{new Date(item.createdAt).toLocaleDateString()}</span>
-                      </div>
-                      <div className={styles.historyScore}>
-                        <div className={styles.scoreBar}>
-                          <div
-                            className={styles.scoreBarFill}
-                            style={{ width: `${item.score}%` }}
-                          />
-                        </div>
-                        <span className={styles.scoreVal}>{item.score}/{item.total}</span>
-                      </div>
-                      <div className={styles.historyActions}>
-                        <Link
-                          href={`/exams/${subject}/exam/${item.examId || item.exam?.id}?recordId=${item.id}`}
-                          className="btn btn-ghost btn-sm"
-                        >
-                          {t('exam.review_btn')}
-                        </Link>
+                  Object.entries(
+                    history.reduce((acc, item) => {
+                      const title = item.exam?.title || 'Exam';
+                      if (!acc[title]) acc[title] = [];
+                      acc[title].push(item);
+                      return acc;
+                    }, {})
+                  ).map(([title, items]) => (
+                    <div key={title} style={{ marginBottom: '1.5rem' }}>
+                      <h3 style={{
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                        marginBottom: '0.75rem',
+                        color: 'var(--text-main)',
+                        borderBottom: '1px solid var(--border-color)',
+                        paddingBottom: '0.5rem'
+                      }}>
+                        {title}
+                      </h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {items.slice(0, 5).map((item, idx) => (
+                          <div key={item.id} className={styles.historyRow}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-primary-deep)', minWidth: '24px' }}>
+                              #{idx + 1}
+                            </span>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', minWidth: '90px' }}>
+                              {new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <div style={{ flex: 1, height: '6px', background: 'var(--color-border-light)', borderRadius: '999px', overflow: 'hidden', minWidth: '60px' }}>
+                              <div style={{ height: '100%', width: `${item.score}%`, background: 'var(--color-primary-grad)', borderRadius: '999px' }} />
+                            </div>
+                            <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--color-primary-deep)', whiteSpace: 'nowrap', minWidth: '40px' }}>
+                              {item.score}/{item.total}
+                            </span>
+                            <Link
+                              href={`/exams/${subject}/exam/${item.examId || item.exam?.id}?recordId=${item.id}`}
+                              className="btn btn-ghost btn-sm"
+                              style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                            >
+                              {t('exam.review_btn')}
+                            </Link>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))
@@ -268,17 +289,137 @@ export default function SubjectPage({ params }) {
             )}
 
             {dashTab === 'favorites' && (
-              <div className={styles.empty}>
-                <span style={{ fontSize: '2.5rem' }}>⭐</span>
-                <p>{t('exam.favorites_empty')}</p>
-                <Link href="/favorites" className="btn btn-secondary btn-sm">
-                  {t('nav.favorites')}
-                </Link>
+              <div style={{ overflowY: 'auto', flex: 1, padding: 'var(--space-md)' }}>
+                <FavoritesTab t={t} />
               </div>
             )}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function FavoritesTab({ t }) {
+  const [favorites, setFavorites] = useState([]);
+  const [pendingRemove, setPendingRemove] = useState({});
+
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
+    setFavorites(stored);
+  }, []);
+
+  const handleRemove = (id) => {
+    const timer = setTimeout(() => {
+      setFavorites((prev) => {
+        const updated = prev.filter((f) => f.id !== id);
+        localStorage.setItem('eduleaf-favorites', JSON.stringify(updated));
+        return updated;
+      });
+      setPendingRemove((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }, 5000);
+
+    setPendingRemove((prev) => ({ ...prev, [id]: timer }));
+  };
+
+  const handleUndo = (id) => {
+    clearTimeout(pendingRemove[id]);
+    setPendingRemove((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  if (favorites.length === 0) {
+    return (
+      <div className={styles.empty}>
+        <span style={{ fontSize: '2.5rem' }}>⭐</span>
+        <p>{t('exam.favorites_empty')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      {favorites.map((fav) => {
+        const isPending = !!pendingRemove[fav.id];
+        return (
+          <div key={fav.id} className={styles.historyItem} style={{
+            opacity: isPending ? 0.5 : 1,
+            transition: 'opacity 0.3s',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+              <p style={{ fontSize: '0.85rem', fontWeight: '600', flex: 1 }}>
+                {fav.question}
+              </p>
+              {isPending ? (
+                <button
+                  onClick={() => handleUndo(fav.id)}
+                  title="Undo"
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--color-border-light)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    color: 'var(--color-primary)',
+                    padding: '2px 8px',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  ↩ Undo
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleRemove(fav.id)}
+                  title="Got it, remove"
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--color-border-light)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    color: 'var(--color-text-muted)',
+                    padding: '2px 8px',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  ✓ Got it
+                </button>
+              )}
+            </div>
+            {fav.type === 'mc' && fav.options && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem' }}>
+                {fav.options.map((opt, i) => {
+                  const letter = String.fromCharCode(65 + i);
+                  const isCorrect = letter === fav.answer;
+                  return (
+                    <span key={letter} style={{
+                      fontSize: '0.8rem',
+                      color: isCorrect ? '#2E7D32' : 'var(--color-text-sub)',
+                      fontWeight: isCorrect ? '600' : '400',
+                    }}>
+                      {letter}. {opt.replace(/^[A-D][.)]\s*/i, '')} {isCorrect ? '✅' : ''}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            {fav.type !== 'mc' && fav.answer && (
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-sub)' }}>
+                💡 {fav.answer}
+              </p>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

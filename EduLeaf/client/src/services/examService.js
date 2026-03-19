@@ -142,24 +142,26 @@ export async function verifySection(id, section, answers) {
 }
 
 export async function addFavorite(questionId, question) {
+  const favs = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
+  const exists = favs.find((f) => f.id === questionId);
+  if (!exists) {
+    favs.push({ id: questionId, ...question, savedAt: new Date().toISOString() });
+    localStorage.setItem('eduleaf-favorites', JSON.stringify(favs));
+  }
   try {
     await API.post('/api/favorites', { questionId, question });
   } catch {
-    const favs = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
-    const exists = favs.find((f) => f.id === questionId);
-    if (!exists) {
-      favs.push({ id: questionId, ...question, savedAt: new Date().toISOString() });
-      localStorage.setItem('eduleaf-favorites', JSON.stringify(favs));
-    }
+    // API not available, localStorage already saved
   }
 }
 
 export async function removeFavorite(questionId) {
+  const favs = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
+  localStorage.setItem('eduleaf-favorites', JSON.stringify(favs.filter((f) => f.id !== questionId)));
   try {
     await API.delete(`/api/favorites/${questionId}`);
   } catch {
-    const favs = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
-    localStorage.setItem('eduleaf-favorites', JSON.stringify(favs.filter((f) => f.id !== questionId)));
+    // API not available, localStorage already updated
   }
 }
 
