@@ -6,6 +6,9 @@ const { v4: uuidv4 } = require('uuid');
 const axios   = require('axios');
 const { Exam, ExamRecord } = require('../models/models');
 
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+
 // ── Multer config ─────────────────────────────────────────────────────────────
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
@@ -41,6 +44,18 @@ router.post('/generate-from-file', upload.single('file'), async (req, res, next)
       const dataBuffer = fs.readFileSync(file.path);
       const data = await pdfParse(dataBuffer);
       textContent = data.text;
+
+      // Upload to Supabase Storage
+      const fileBuffer = fs.readFileSync(file.path);
+      const fileName = `${Date.now()}-${file.originalname}`;
+      const bucketName = `${subject}uploads`.toLowerCase(); // spanishuploads, germanuploads etc
+
+      await supabase.storage
+        .from(bucketName)
+        .upload(fileName, fileBuffer, { contentType: file.mimetype });
+
+      // Delete local temporary file
+      fs.unlinkSync(file.path);
     } else {
       // Basic fallback for other file types - for simplicity in this session we focus on PDF
       textContent = 'File content not extracted. Please upload a PDF.';
