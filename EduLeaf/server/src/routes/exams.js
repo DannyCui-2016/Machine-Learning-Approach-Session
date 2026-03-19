@@ -67,7 +67,7 @@ router.post('/generate-from-file', upload.single('file'), async (req, res, next)
     1. multipleChoice: 10 questions (options: A, B, C, D), 4 points each (Total 40).
     2. fillIn: 10 fill-in-the-blank questions (provide the exactly 1-2 word answer), 3 points each (Total 30).
     3. trueFalse: 10 true or false questions based on the text. The answer must be "True" or "False", 2 points each (Total 20).
-    4. translation: 5 short sentences from the text to translate. If the text is English, translate it to ${subject}. If the text is in ${subject}, translate to English. The answer should be the translated text, 2 points each (Total 10).
+    4. translation: 5 short sentences from the text to translate from ${subject} into English. The "question" field must be a sentence in ${subject}. The "answer" field must be the English translation ONLY — no ${subject} words mixed in, pure English answer. 2 points each (Total 10).
 
     Respond ONLY with valid JSON in this exact structure, with no markdown formatting around it:
     {
@@ -159,6 +159,15 @@ router.get('/records/:id', async (req, res, next) => {
     const record = await ExamRecord.findByPk(req.params.id, { include: ['exam'] });
     if (!record) return res.status(404).json({ error: 'Record not found' });
     res.json(record);
+  } catch (err) { next(err); }
+});
+
+router.delete('/records/:id', async (req, res, next) => {
+  try {
+    const record = await ExamRecord.findByPk(req.params.id);
+    if (!record) return res.status(404).json({ error: 'Record not found' });
+    await record.destroy();
+    res.json({ success: true });
   } catch (err) { next(err); }
 });
 

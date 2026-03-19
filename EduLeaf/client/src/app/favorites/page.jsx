@@ -60,9 +60,51 @@ export default function FavoritesPage() {
               </div>
 
               <div className={styles.list}>
-                {favorites.map((fav) => (
-                  <FavoriteCard key={fav.id} fav={fav} onRemove={handleRemove} t={t} />
-                ))}
+                {Object.entries(
+                  favorites.reduce((acc, fav) => {
+                    const key = fav.subject || 'other';
+                    if (!acc[key]) acc[key] = [];
+                    acc[key].push(fav);
+                    return acc;
+                  }, {})
+                ).map(([subjectKey, items]) => {
+                  const subjectMeta = {
+                    spanish: { flag: '🇪🇸', label: 'Spanish' },
+                    german: { flag: '🇩🇪', label: 'German' },
+                    'english-pte': { flag: '🇬🇧', label: 'English PTE' },
+                  };
+                  const meta = subjectMeta[subjectKey] || { flag: '📚', label: subjectKey };
+                  return (
+                    <div key={subjectKey} style={{ marginBottom: '2rem' }}>
+                      <h2 style={{
+                        fontSize: '1.1rem',
+                        fontWeight: '700',
+                        color: 'var(--color-text-primary)',
+                        marginBottom: '1rem',
+                        paddingBottom: '0.5rem',
+                        borderBottom: '2px solid var(--color-primary-lighter)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                      }}>
+                        {meta.flag} {meta.label}
+                        <span style={{
+                          fontSize: '0.75rem',
+                          fontWeight: '500',
+                          color: 'var(--color-text-muted)',
+                          background: 'var(--color-bg-subtle)',
+                          padding: '2px 8px',
+                          borderRadius: '999px',
+                        }}>
+                          {items.length} questions
+                        </span>
+                      </h2>
+                      {items.map((fav) => (
+                        <FavoriteCard key={fav.id} fav={fav} onRemove={handleRemove} t={t} />
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
@@ -74,11 +116,13 @@ export default function FavoritesPage() {
 
 function FavoriteCard({ fav, onRemove, t }) {
   const typeColors = {
-    mc:        { bg: '#E8F5E9', color: '#2E7D32', label: t('exam_page.multiple_choice') },
-    fill:      { bg: '#E3F2FD', color: '#1565C0', label: t('exam_page.fill_in')         },
-    listening: { bg: '#F3E5F5', color: '#6A1B9A', label: t('exam_page.listening')       },
-    reading:   { bg: '#FFF8E1', color: '#E65100', label: t('exam_page.reading')         },
-    writing:   { bg: '#FCE4EC', color: '#880E4F', label: t('exam_page.writing')         },
+    mc: { bg: '#E8F5E9', color: '#2E7D32', label: 'Multiple Choice' },
+    fill: { bg: '#E3F2FD', color: '#1565C0', label: 'Fill in the Blank' },
+    tf: { bg: '#FFF8E1', color: '#E65100', label: 'True / False' },
+    translation: { bg: '#F3E5F5', color: '#6A1B9A', label: 'Translation' },
+    listening: { bg: '#FCE4EC', color: '#880E4F', label: 'Listening' },
+    reading: { bg: '#FFF3E0', color: '#E65100', label: 'Reading' },
+    writing: { bg: '#FCE4EC', color: '#880E4F', label: 'Writing' },
   };
   const meta = typeColors[fav.type] || typeColors.mc;
 

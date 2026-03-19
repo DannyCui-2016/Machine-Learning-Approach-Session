@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useDropzone } from 'react-dropzone';
-import { generateExamFromFile, generateExamAuto, getHistory, getFavorites } from '../../../services/examService';
+import { generateExamFromFile, generateExamAuto, getHistory, getFavorites, deleteExamRecord } from '../../../services/examService';
 import styles from './page.module.css';
 
 const SUBJECT_META = {
@@ -86,6 +86,11 @@ export default function SubjectPage({ params }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteRecord = async (recordId) => {
+    await deleteExamRecord(recordId);
+    setHistory((prev) => prev.filter((item) => item.id !== recordId));
   };
 
   const canGenerate =
@@ -279,6 +284,13 @@ export default function SubjectPage({ params }) {
                             >
                               {t('exam.review_btn')}
                             </Link>
+                            <button
+                              onClick={() => handleDeleteRecord(item.id)}
+                              className="btn btn-ghost btn-sm"
+                              style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                            >
+                              🗑️
+                            </button>
                           </div>
                         ))}
                       </div>

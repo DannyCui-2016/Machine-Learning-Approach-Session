@@ -160,6 +160,15 @@ export async function getExamRecord(id) {
   }
 }
 
+export async function deleteExamRecord(recordId) {
+  try {
+    await API.delete(`/api/exams/records/${recordId}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function getHistory(subject) {
   try {
     const params = subject ? { subject } : {};
