@@ -290,7 +290,7 @@ export default function SubjectPage({ params }) {
 
             {dashTab === 'favorites' && (
               <div style={{ overflowY: 'auto', flex: 1, padding: 'var(--space-md)' }}>
-                <FavoritesTab t={t} />
+                <FavoritesTab t={t} subject={subject} />
               </div>
             )}
           </div>
@@ -300,22 +300,24 @@ export default function SubjectPage({ params }) {
   );
 }
 
-function FavoritesTab({ t }) {
+function FavoritesTab({ t, subject }) {
   const [favorites, setFavorites] = useState([]);
   const [pendingRemove, setPendingRemove] = useState({});
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
-    setFavorites(stored);
-  }, []);
+    const filtered = subject
+      ? stored.filter((f) => f.subject === subject)
+      : stored;
+    setFavorites(filtered);
+  }, [subject]);
 
   const handleRemove = (id) => {
     const timer = setTimeout(() => {
-      setFavorites((prev) => {
-        const updated = prev.filter((f) => f.id !== id);
-        localStorage.setItem('eduleaf-favorites', JSON.stringify(updated));
-        return updated;
-      });
+      const all = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
+      const updated = all.filter((f) => f.id !== id);
+      localStorage.setItem('eduleaf-favorites', JSON.stringify(updated));
+      setFavorites((prev) => prev.filter((f) => f.id !== id));
       setPendingRemove((prev) => {
         const next = { ...prev };
         delete next[id];

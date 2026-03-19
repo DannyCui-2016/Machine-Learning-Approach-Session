@@ -55,7 +55,8 @@ export default function ExamPage() {
 
     // Restore favorites from localStorage
     const storedFavs = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
-    setFavorites(new Set(storedFavs.map((f) => f.id)));
+    const filtered = storedFavs.filter((f) => !f.subject || f.subject === subject);
+    setFavorites(new Set(filtered.map((f) => f.id)));
   }, [id]);
 
   // ── Scroll spy ─────────────────────────────────────────────────────────────
@@ -96,10 +97,10 @@ export default function ExamPage() {
       await removeFavorite(q.id);
     } else {
       next.add(q.id);
-      await addFavorite(q.id, q);
+      await addFavorite(q.id, q, subject);
     }
     setFavorites(next);
-  }, [favorites]);
+  }, [favorites, subject]);
 
   const reviewAnswers = useCallback((examData, ans) => {
     let earned = 0;
