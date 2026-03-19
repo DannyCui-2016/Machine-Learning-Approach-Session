@@ -258,30 +258,27 @@ export default function SubjectPage({ params }) {
                         {title}
                       </h3>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {items.map((item) => (
-                          <div key={item.id} className={styles.historyItem}>
-                            <div className={styles.historyMeta}>
-                              <span className={styles.historyDate}>
-                                {new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
+                        {items.slice(0, 5).map((item, idx) => (
+                          <div key={item.id} className={styles.historyRow}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-primary-deep)', minWidth: '24px' }}>
+                              #{idx + 1}
+                            </span>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', minWidth: '90px' }}>
+                              {new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <div style={{ flex: 1, height: '6px', background: 'var(--color-border-light)', borderRadius: '999px', overflow: 'hidden', minWidth: '60px' }}>
+                              <div style={{ height: '100%', width: `${item.score}%`, background: 'var(--color-primary-grad)', borderRadius: '999px' }} />
                             </div>
-                            <div className={styles.historyScore}>
-                              <div className={styles.scoreBar}>
-                                <div
-                                  className={styles.scoreBarFill}
-                                  style={{ width: `${item.score}%` }}
-                                />
-                              </div>
-                              <span className={styles.scoreVal}>{item.score}/{item.total}</span>
-                              <div style={{ marginLeft: 'auto' }}>
-                                <Link
-                                  href={`/exams/${subject}/exam/${item.examId || item.exam?.id}?recordId=${item.id}`}
-                                  className="btn btn-ghost btn-sm"
-                                >
-                                  {t('exam.review_btn')}
-                                </Link>
-                              </div>
-                            </div>
+                            <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--color-primary-deep)', whiteSpace: 'nowrap', minWidth: '40px' }}>
+                              {item.score}/{item.total}
+                            </span>
+                            <Link
+                              href={`/exams/${subject}/exam/${item.examId || item.exam?.id}?recordId=${item.id}`}
+                              className="btn btn-ghost btn-sm"
+                              style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                            >
+                              {t('exam.review_btn')}
+                            </Link>
                           </div>
                         ))}
                       </div>
