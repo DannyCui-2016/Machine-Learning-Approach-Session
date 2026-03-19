@@ -1,12 +1,4 @@
-/* ============================================
-   EduLeaf Global Design System
-   Primary: Light Green (#4CAF50, #81C784, #C8E6C9, #E8F5E9)
-   Accent: Warm Amber (#FFB74D)
-   Background: Off-white (#FAFFF7)
-   ============================================ */
-
-@import url('https://fonts.googleapis.csom/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
 
 /* ─── CSS Variables ─── */
 :root {
@@ -65,7 +57,7 @@
   --shadow-xl:  0 16px 48px rgba(76,175,80,0.20);
 
   /* Typography */
-  --font-sans:  'Poppins', 'Noto Sans SC', system-ui, sans-serif;
+  --font-sans: 'Nunito', 'Noto Sans SC', sans-serif;
   --font-size-xs:   0.75rem;
   --font-size-sm:   0.875rem;
   --font-size-base: 1rem;

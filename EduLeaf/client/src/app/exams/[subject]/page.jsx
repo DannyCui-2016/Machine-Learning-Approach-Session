@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useDropzone } from 'react-dropzone';
-import { generateExamFromFile, generateExamAuto, getHistory, getFavorites } from '../../../services/examService';
+import { generateExamFromFile, generateExamAuto, getHistory, getFavorites, deleteExamRecord } from '../../../services/examService';
 import styles from './page.module.css';
 
 const SUBJECT_META = {
@@ -86,6 +86,11 @@ export default function SubjectPage({ params }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteRecord = async (recordId) => {
+    await deleteExamRecord(recordId);
+    setHistory((prev) => prev.filter((item) => item.id !== recordId));
   };
 
   const canGenerate =
@@ -279,6 +284,13 @@ export default function SubjectPage({ params }) {
                             >
                               {t('exam.review_btn')}
                             </Link>
+                            <button
+                              onClick={() => handleDeleteRecord(item.id)}
+                              className="btn btn-ghost btn-sm"
+                              style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                            >
+                              🗑️
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -290,7 +302,7 @@ export default function SubjectPage({ params }) {
 
             {dashTab === 'favorites' && (
               <div style={{ overflowY: 'auto', flex: 1, padding: 'var(--space-md)' }}>
-                <FavoritesTab t={t} />
+                <FavoritesTab t={t} subject={subject} />
               </div>
             )}
           </div>
@@ -300,22 +312,24 @@ export default function SubjectPage({ params }) {
   );
 }
 
-function FavoritesTab({ t }) {
+function FavoritesTab({ t, subject }) {
   const [favorites, setFavorites] = useState([]);
   const [pendingRemove, setPendingRemove] = useState({});
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
-    setFavorites(stored);
-  }, []);
+    const filtered = subject
+      ? stored.filter((f) => f.subject === subject)
+      : stored;
+    setFavorites(filtered);
+  }, [subject]);
 
   const handleRemove = (id) => {
     const timer = setTimeout(() => {
-      setFavorites((prev) => {
-        const updated = prev.filter((f) => f.id !== id);
-        localStorage.setItem('eduleaf-favorites', JSON.stringify(updated));
-        return updated;
-      });
+      const all = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
+      const updated = all.filter((f) => f.id !== id);
+      localStorage.setItem('eduleaf-favorites', JSON.stringify(updated));
+      setFavorites((prev) => prev.filter((f) => f.id !== id));
       setPendingRemove((prev) => {
         const next = { ...prev };
         delete next[id];
