@@ -37,6 +37,7 @@ const en = {
     title: "Exam Module",
     choose_subject: "Choose a Subject",
     subject_sub: "Select a subject to begin. Upload materials or auto-generate by level.",
+    subject_sub_2: "Upload materials or auto-generate by level.",
     spanish: "Spanish",
     german: "German",
     english_pte: "English PTE",

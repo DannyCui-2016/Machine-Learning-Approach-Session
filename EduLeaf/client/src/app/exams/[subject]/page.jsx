@@ -107,7 +107,7 @@ export default function SubjectPage({ params }) {
             <span className={styles.flag}>{meta.flag}</span>
             <div>
               <h1 className={styles.title}>{t(`exam.${meta.key}`)}</h1>
-              <p className={styles.subtitle}>{t('exam.subject_sub')}</p>
+              <p className={styles.subtitle}>{t('exam.subject_sub_2')}</p>
             </div>
           </div>
         </div>
