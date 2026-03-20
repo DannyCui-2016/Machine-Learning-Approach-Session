@@ -11,7 +11,7 @@ export default function Footer() {
     <footer className={styles.footer}>
       <div className={styles.inner}>
         <div className={styles.brand}>
-          <span className={styles.logo}>🍃 EduLeaf</span>
+          <span className={styles.logo}><img width={25} height={25} src="/logo.svg" alt="Logo" /> KnowGrow</span>
           <p className={styles.tagline}>
             {t('home.hero_sub')}
           </p>
@@ -37,7 +37,7 @@ export default function Footer() {
         </div>
       </div>
       <div className={styles.bottom}>
-        <p className={styles.copy}>© 2024 EduLeaf. Made with 🍃 for learners everywhere.</p>
+        <p className={styles.copy}>© 2026 KnowGrow. Made for learners everywhere.</p>
       </div>
     </footer>
   );

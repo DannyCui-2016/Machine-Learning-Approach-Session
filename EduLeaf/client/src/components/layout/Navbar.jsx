@@ -14,8 +14,8 @@ export default function Navbar() {
       <div className={styles.inner}>
         {/* Logo */}
         <Link href="/" className={styles.logo}>
-          <span className={styles.logoIcon}>🍃</span>
-          <span className={styles.logoText}>EduLeaf</span>
+          <img src="/logo.svg" alt="EduLeaf" width="32" height="32" style={{ borderRadius: '8px' }} />
+          <span className={styles.logoText}>KnowGrow</span>
         </Link>
 
         {/* Desktop Nav */}

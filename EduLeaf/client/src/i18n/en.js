@@ -27,7 +27,7 @@ const en = {
     how_title: "How It Works",
     how_sub: "Three simple steps to smarter studying.",
     step1_title: "Choose a Subject",
-    step1_desc: "Pick Spanish, German, English PTE, or Math.",
+    step1_desc: "Pick Spanish, German, Math, etc.",
     step2_title: "Generate Your Exam",
     step2_desc: "Upload files or let AI auto-generate by difficulty.",
     step3_title: "Study & Score",

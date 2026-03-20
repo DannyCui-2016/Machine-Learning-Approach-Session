@@ -5,6 +5,10 @@ import Footer from '../components/layout/Footer';
 
 export const metadata = {
   title: 'EduLeaf – Smart Learning for Every Student',
+  icons: {
+    icon: '/logo.svg',
+
+  },
   description: 'AI-powered exam generation and NZ curriculum math exercises for students from primary to university.',
 };
 
@@ -14,6 +18,8 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="icon" href="/logo.png" type="image/png" />
+        <link rel="shortcut icon" href="/logo.png" />
       </head>
       <body>
         <LanguageProvider>
