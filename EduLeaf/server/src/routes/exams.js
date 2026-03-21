@@ -218,7 +218,7 @@ router.get('/:id', async (req, res, next) => {
 // ── POST /api/exams/:id/submit ────────────────────────────────────────────────
 router.post('/:id/submit', async (req, res, next) => {
   try {
-    const { answers } = req.body;
+    const { answers, timeElapsed } = req.body;
     const exam = await Exam.findByPk(req.params.id);
     if (!exam) return res.status(404).json({ error: 'Exam not found' });
 
@@ -238,7 +238,7 @@ router.post('/:id/submit', async (req, res, next) => {
     });
 
     const score = Math.round((earned / total) * 100);
-    await ExamRecord.create({ examId: exam.id, score, total: 100, answersJson: JSON.stringify(answers) });
+    await ExamRecord.create({ examId: exam.id, score, total: 100, timeElapsed: timeElapsed || 0, answersJson: JSON.stringify(answers) });
     res.json({ score, total: 100, message: 'Submitted successfully!' });
   } catch (err) { next(err); }
 });

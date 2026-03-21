@@ -33,6 +33,21 @@ export default function ExamPage() {
   const sectionRefs = useRef({});
   const navRef = useRef(null);
 
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setTimeElapsed((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
   // ── Load exam ──────────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
@@ -59,22 +74,23 @@ export default function ExamPage() {
 
   // ── Scroll spy ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.dataset.section);
-          }
-        });
-      },
-      { rootMargin: '-20% 0px -70% 0px', threshold: 0 }
-    );
+    if (!exam) return;
 
-    SECTIONS.forEach(({ key }) => {
-      const el = sectionRefs.current[key];
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
+    const handleScroll = () => {
+      const scrollY = window.scrollY + 200;
+      let current = 'multipleChoice';
+      SECTIONS.forEach(({ key }) => {
+        const el = sectionRefs.current[key];
+        if (el && el.offsetTop <= scrollY) {
+          current = key;
+        }
+      });
+      setActiveSection(current);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [exam]);
 
   const scrollTo = (key) => {
@@ -156,10 +172,11 @@ export default function ExamPage() {
   // ── Submit exam ────────────────────────────────────────────────────────────
   const handleSubmit = useCallback(async () => {
     if (!exam) return;
-    await submitExam(exam.id, answers);
+    clearInterval(timerRef.current);
+    await submitExam(exam.id, answers, timeElapsed);
     reviewAnswers(exam, answers);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [exam, answers, reviewAnswers]);
+  }, [exam, answers, reviewAnswers, timeElapsed]);
 
   // ── Render helpers ─────────────────────────────────────────────────────────
   if (loading) {
@@ -220,7 +237,19 @@ export default function ExamPage() {
               </p>
             </div>
             {!submitted && (
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
+                <div style={{
+                  fontSize: '0.9rem',
+                  color: 'var(--color-primary-deep)',
+                  fontWeight: '600',
+                  fontVariantNumeric: 'tabular-nums',
+                  background: 'var(--color-primary-pale)',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  border: '1px solid var(--color-primary-lighter)',
+                }}>
+                  ⏱ {formatTime(timeElapsed)}
+                </div>
                 {process.env.NODE_ENV === 'development' && (
                   <button
                     className={`btn btn-secondary ${styles.submitBtn}`}
