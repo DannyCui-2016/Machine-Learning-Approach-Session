@@ -1,9 +1,9 @@
 const express = require('express');
-const router  = express.Router();
-const multer  = require('multer');
-const path    = require('path');
+const router = express.Router();
+const multer = require('multer');
+const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const axios   = require('axios');
+const axios = require('axios');
 const { Exam, ExamRecord } = require('../models/models');
 
 const { createClient } = require('@supabase/supabase-js');
@@ -12,7 +12,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 // ── Multer config ─────────────────────────────────────────────────────────────
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
-  filename:    (req, file, cb) => cb(null, `${uuidv4()}-${file.originalname}`),
+  filename: (req, file, cb) => cb(null, `${uuidv4()}-${file.originalname}`),
 });
 const upload = multer({
   storage,
@@ -29,9 +29,9 @@ const ML_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
 // ── POST /api/exams/generate-from-file ───────────────────────────────────────
 router.post('/generate-from-file', upload.single('file'), async (req, res, next) => {
-    console.log('✅ /generate-from-file route hit');
-    console.log('File received:', req.file);
-    console.log('Body received:', req.body);
+  console.log('✅ /generate-from-file route hit');
+  console.log('File received:', req.file);
+  console.log('Body received:', req.body);
   try {
     const { subject } = req.body;
     const file = req.file;
@@ -71,7 +71,15 @@ router.post('/generate-from-file', upload.single('file'), async (req, res, next)
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
-    You are an expert exam generator. Create a structured exam based *strictly* on the following text extracted from a document. The subject is "${subject}".
+    You are an expert ${subject} language exam generator. Create a structured exam to test the student's ${subject} language knowledge based on the vocabulary, grammar, and phrases found in the following text.
+
+    STRICT RULES:
+    - Questions must test ${subject} language knowledge ONLY (vocabulary, grammar, translation, comprehension).
+    - Do NOT ask questions about the document itself, file names, titles, lesson numbers, or document structure.
+    - Do NOT ask "what does the text start with" or "what is the title of" type questions.
+    - Do NOT reference meta-information like "Level 1, Lesson 1" or document formatting.
+    - Every question must test real language ability that a student would encounter in a ${subject} exam.
+    - Base questions on the ${subject} words, phrases, grammar patterns, and sentences found in the text.
 
     Extracted Text:
     ---
@@ -80,8 +88,13 @@ router.post('/generate-from-file', upload.single('file'), async (req, res, next)
 
     Generate an exam with exactly these 4 sections totaling 100 points:
     1. multipleChoice: 10 questions (options: A, B, C, D), 4 points each (Total 40).
-    2. fillIn: 10 fill-in-the-blank questions (provide the exactly 1-2 word answer), 3 points each (Total 30).
-    3. trueFalse: 10 true or false questions based on the text. The answer must be "True" or "False", 2 points each (Total 20).
+    2. fillIn: 10 fill-in-the-blank questions. Each question must have ONE and ONLY ONE correct answer. Rules:
+      - The blank replaces a SPECIFIC word from the original text
+      - Include English context in parentheses to make the expected answer unambiguous. Example: "Yo _____ (I am) estudiante." or "La Coca-Cola es para _____ (me/I want it)."
+      - The question must clearly indicate what word is expected
+      - Do NOT create questions where "ti", "mí", "él" or other pronouns could all be valid
+      - If filling a pronoun, specify the subject clearly: "According to Peter, the Coca-Cola is for _____ (Peter himself)"
+   3 points each (Total 30).    3. trueFalse: 10 true or false questions based on the text. The answer must be "True" or "False", 2 points each (Total 20).
     4. translation: 5 short sentences from the text to translate from ${subject} into English. The "question" field must be a sentence in ${subject}. The "answer" field must be the English translation ONLY — no ${subject} words mixed in, pure English answer. 2 points each (Total 10).
 
     Respond ONLY with valid JSON in this exact structure, with no markdown formatting around it:
@@ -106,21 +119,28 @@ router.post('/generate-from-file', upload.single('file'), async (req, res, next)
 
     const result = await model.generateContent(prompt);
     const mlResult = JSON.parse(result.response.text());
+    const examId = uuidv4();
+    Object.entries(mlResult.sections).forEach(([sectionKey, questions]) => {
+      questions.forEach((q, idx) => {
+        q.id = `${examId.slice(0, 8)}-${sectionKey}-${idx}`;
+      });
+    });
     // Persist exam
     const originalFileName = file.originalname ? file.originalname.replace(/\.[^/.]+$/, "") : null;
     const finalTitle = originalFileName || `${subject} Exam – File`;
 
     const exam = await Exam.create({
-      title:       finalTitle,
+      id: examId,
+      title: finalTitle,
       subject,
-      source:      'file',
+      source: 'file',
       sectionsJson: JSON.stringify(mlResult.sections),
     });
 
     res.json({ id: exam.id, title: exam.title, subject, sections: mlResult.sections });
   } catch (err) {
     console.error('❌ Error in generate-from-file:', err);
-    console.error('Full error:', err.stack); 
+    console.error('Full error:', err.stack);
     next(err);
   }
 });
@@ -134,10 +154,10 @@ router.post('/generate-auto', async (req, res, next) => {
     const { data: mlResult } = await axios.post(`${ML_URL}/api/ml/generate-auto`, { subject, level }, { timeout: 30000 });
 
     const exam = await Exam.create({
-      title:       mlResult.title || `${subject} – ${level}`,
+      title: mlResult.title || `${subject} – ${level}`,
       subject,
       level,
-      source:      'auto',
+      source: 'auto',
       sectionsJson: JSON.stringify(mlResult.sections),
     });
 
@@ -252,8 +272,8 @@ function getMockExam(subject, level) {
     subject, level,
     sections: {
       multipleChoice: [
-        { id: 'mc1', type: 'mc', question: 'Which word means "Good morning" in Spanish?', options: ['Buenos días','Buenas noches','Hola','Adiós'], answer: 'A', points: 4 },
-        { id: 'mc2', type: 'mc', question: 'What is the plural of "el libro"?', options: ['los libros','las libros','el libros','los libro'], answer: 'A', points: 4 },
+        { id: 'mc1', type: 'mc', question: 'Which word means "Good morning" in Spanish?', options: ['Buenos días', 'Buenas noches', 'Hola', 'Adiós'], answer: 'A', points: 4 },
+        { id: 'mc2', type: 'mc', question: 'What is the plural of "el libro"?', options: ['los libros', 'las libros', 'el libros', 'los libro'], answer: 'A', points: 4 },
       ],
       fillIn: [
         { id: 'fi1', type: 'fill', question: 'Complete: "Yo _____ estudiante." (to be)', answer: 'soy', points: 4 },

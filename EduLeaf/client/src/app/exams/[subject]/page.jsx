@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { useDropzone } from 'react-dropzone';
-import { generateExamFromFile, generateExamAuto, getHistory, getFavorites, deleteExamRecord } from '../../../services/examService';
+import { generateExamFromFile, generateExamAuto, getHistory, getFavorites, deleteExamRecord, removeFavorite } from '../../../services/examService';
 import styles from './page.module.css';
 
 const SUBJECT_META = {
@@ -107,7 +107,7 @@ export default function SubjectPage({ params }) {
             <span className={styles.flag}>{meta.flag}</span>
             <div>
               <h1 className={styles.title}>{t(`exam.${meta.key}`)}</h1>
-              <p className={styles.subtitle}>{t('exam.subject_sub')}</p>
+              <p className={styles.subtitle}>{t('exam.subject_sub_2')}</p>
             </div>
           </div>
         </div>
@@ -302,7 +302,7 @@ export default function SubjectPage({ params }) {
 
             {dashTab === 'favorites' && (
               <div style={{ overflowY: 'auto', flex: 1, padding: 'var(--space-md)' }}>
-                <FavoritesTab t={t} subject={subject} />
+                <FavoritesTab key={dashTab} t={t} subject={subject} />
               </div>
             )}
           </div>
@@ -317,18 +317,15 @@ function FavoritesTab({ t, subject }) {
   const [pendingRemove, setPendingRemove] = useState({});
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
-    const filtered = subject
-      ? stored.filter((f) => f.subject === subject)
-      : stored;
-    setFavorites(filtered);
+    (async () => {
+      const data = await getFavorites(subject);
+      setFavorites(data);
+    })();
   }, [subject]);
 
   const handleRemove = (id) => {
-    const timer = setTimeout(() => {
-      const all = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
-      const updated = all.filter((f) => f.id !== id);
-      localStorage.setItem('eduleaf-favorites', JSON.stringify(updated));
+    const timer = setTimeout(async () => {
+      await removeFavorite(id);
       setFavorites((prev) => prev.filter((f) => f.id !== id));
       setPendingRemove((prev) => {
         const next = { ...prev };
@@ -336,7 +333,6 @@ function FavoritesTab({ t, subject }) {
         return next;
       });
     }, 5000);
-
     setPendingRemove((prev) => ({ ...prev, [id]: timer }));
   };
 

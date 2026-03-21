@@ -5,7 +5,9 @@
 /* ─── Hero ─── */
 .hero {
   position: relative;
-  min-height: calc(100vh - 68px);
+  /* min-height: calc(100vh - 68px); */
+  margin-top:150px;
+  margin-bottom: 40px;
   display: flex;
   align-items: center;
   padding: var(--space-3xl) 0;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { removeFavorite } from '../../services/examService';
+import { removeFavorite, getFavorites } from '../../services/examService';
 import styles from './page.module.css';
 
 export default function FavoritesPage() {
@@ -11,8 +11,10 @@ export default function FavoritesPage() {
   const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
-    setFavorites(stored);
+    (async () => {
+      const data = await getFavorites();
+      setFavorites(data);
+    })();
   }, []);
 
   const handleRemove = async (id) => {
@@ -20,8 +22,8 @@ export default function FavoritesPage() {
     setFavorites((prev) => prev.filter((f) => f.id !== id));
   };
 
-  const handleClearAll = () => {
-    localStorage.removeItem('eduleaf-favorites');
+  const handleClearAll = async () => {
+    await Promise.all(favorites.map((f) => removeFavorite(f.id)));
     setFavorites([]);
   };
 

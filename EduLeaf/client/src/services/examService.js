@@ -142,13 +142,7 @@ export async function verifySection(id, section, answers) {
 }
 
 export async function removeFavorite(questionId) {
-  const favs = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
-  localStorage.setItem('eduleaf-favorites', JSON.stringify(favs.filter((f) => f.id !== questionId)));
-  try {
-    await API.delete(`/api/favorites/${questionId}`);
-  } catch {
-    // API not available, localStorage already updated
-  }
+  await API.delete(`/api/favorites/${questionId}`);
 }
 
 export async function getExamRecord(id) {
@@ -180,15 +174,15 @@ export async function getHistory(subject) {
 }
 
 export async function addFavorite(questionId, question, subject) {
-  const favs = JSON.parse(localStorage.getItem('eduleaf-favorites') || '[]');
-  const exists = favs.find((f) => f.id === questionId);
-  if (!exists) {
-    favs.push({ id: questionId, ...question, subject, savedAt: new Date().toISOString() });
-    localStorage.setItem('eduleaf-favorites', JSON.stringify(favs));
-  }
+  const questionWithSubject = { ...question, subject };
+  await API.post('/api/favorites', { questionId, question: questionWithSubject });
+}
+
+export async function getFavorites(subject) {
   try {
-    await API.post('/api/favorites', { questionId, question });
+    const { data } = await API.get('/api/favorites');
+    return subject ? data.filter((f) => f.subject === subject) : data;
   } catch {
-    // localStorage already saved
+    return [];
   }
 }
