@@ -268,29 +268,36 @@ export default function SubjectPage({ params }) {
                             <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-primary-deep)', minWidth: '24px' }}>
                               #{idx + 1}
                             </span>
-                            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', minWidth: '90px' }}>
-                              {new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', minWidth: '80px' }}>
+                              {new Date(item.createdAt).toLocaleDateString([], { month: '2-digit', day: '2-digit' })} {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
-                            <div style={{ flex: 1, height: '6px', background: 'var(--color-border-light)', borderRadius: '999px', overflow: 'hidden', minWidth: '60px' }}>
+                            <div style={{ flex: 1, height: '6px', background: 'var(--color-border-light)', borderRadius: '999px', overflow: 'hidden', minWidth: '40px' }}>
                               <div style={{ height: '100%', width: `${item.score}%`, background: 'var(--color-primary-grad)', borderRadius: '999px' }} />
                             </div>
-                            <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--color-primary-deep)', whiteSpace: 'nowrap', minWidth: '40px' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--color-primary-deep)', whiteSpace: 'nowrap', minWidth: '36px' }}>
                               {item.score}/{item.total}
                             </span>
-                            <Link
-                              href={`/exams/${subject}/exam/${item.examId || item.exam?.id}?recordId=${item.id}`}
-                              className="btn btn-ghost btn-sm"
-                              style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-                            >
-                              {t('exam.review_btn')}
-                            </Link>
-                            <button
-                              onClick={() => handleDeleteRecord(item.id)}
-                              className="btn btn-ghost btn-sm"
-                              style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-                            >
-                              🗑️
-                            </button>
+                            {item.timeElapsed > 0 && (
+                              <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
+                                ⏱ {Math.floor(item.timeElapsed / 60)}:{String(item.timeElapsed % 60).padStart(2, '0')}
+                              </span>
+                            )}
+                            <div style={{ display: 'flex', gap: '2px', flexShrink: 0 }}>
+                              <Link
+                                href={`/exams/${subject}/exam/${item.examId || item.exam?.id}?recordId=${item.id}`}
+                                className="btn btn-ghost btn-sm"
+                                style={{ whiteSpace: 'nowrap' }}
+                              >
+                                {t('exam.review_btn')}
+                              </Link>
+                              <button
+                                onClick={() => handleDeleteRecord(item.id)}
+                                className="btn btn-ghost btn-sm"
+                                style={{ color: 'var(--color-error)', padding: '6px 8px' }}
+                              >
+                                🗑️
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>

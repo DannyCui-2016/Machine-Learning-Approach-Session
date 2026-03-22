@@ -98,7 +98,7 @@ export async function generateExamFromFile(file, subject) {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('subject', subject);
-  const { data } = await API.post('/api/exams/generate-from-file', formData,{
+  const { data } = await API.post('/api/exams/generate-from-file', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -122,12 +122,11 @@ export async function getExam(id) {
   }
 }
 
-export async function submitExam(id, answers) {
+export async function submitExam(id, answers, timeElapsed) {
   try {
-    const { data } = await API.post(`/api/exams/${id}/submit`, { answers });
+    const { data } = await API.post(`/api/exams/${id}/submit`, { answers, timeElapsed });
     return data;
   } catch {
-    // Mock scoring
     return { score: 78, breakdown: {}, message: 'Exam submitted successfully!' };
   }
 }
