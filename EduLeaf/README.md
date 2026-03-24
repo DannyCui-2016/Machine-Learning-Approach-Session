@@ -26,5 +26,5 @@ uvicorn app.main:app --reload --port 8000
 
 ## Modules
 
-1. **Exam Design** (Module 1) — AI-powered exam generation for Spanish, German, English PTE
+1. **Language Module** (Module 1) — AI-powered exam generation for Spanish, German, English PTE
 2. **Math Module** (Module 2) — NZ curriculum-aligned math exercises (Year 1–13 template)

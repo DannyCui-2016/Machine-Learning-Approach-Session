@@ -53,89 +53,127 @@
   margin: 0 auto var(--space-lg);
 }
 
-/* ── Systems Grid ── */
-.systemsSection {
+.comingSoonBanner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--color-accent-pale);
+  border: 1px solid var(--color-accent-light);
+  color: var(--color-warning);
+  border-radius: var(--radius-full);
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.comingIcon { font-size: 1.1rem; }
+
+/* ── Groups Section ── */
+.groupsSection {
   padding: var(--space-2xl) 0 var(--space-3xl);
 }
 
-.systemsGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-xl);
+.group {
+  margin-bottom: var(--space-2xl);
 }
 
-.systemCard {
-  background: var(--color-bg-card);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--color-border-light);
-  padding: var(--space-2xl) var(--space-xl);
-  text-align: center;
-  transition: all var(--transition-base);
-  height: 100%;
+.groupHeader {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.groupIcon { font-size: 1.75rem; }
+
+.groupTitle {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  margin: 0;
+}
+
+.groupDivider {
+  flex: 1;
+  height: 2px;
+  border-radius: var(--radius-full);
+  opacity: 0.3;
+}
+
+/* ── Years Grid ── */
+.yearsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-md);
+}
+
+.yearCard {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-border-light);
+  padding: var(--space-lg);
+  transition: all var(--transition-base);
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
 }
 
-.systemCard::before {
+.yearCard::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; height: 4px;
-  background: var(--sys-color, var(--color-primary));
-  opacity: 0.8;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--year-color, var(--color-primary));
+  opacity: 0.6;
   transition: opacity var(--transition-base);
 }
 
-.systemCard:hover {
-  transform: translateY(-8px);
+.yearCard:hover {
   box-shadow: var(--shadow-lg);
-  border-color: var(--sys-color, var(--color-primary));
+  transform: translateY(-4px);
+  border-color: var(--year-color, var(--color-primary-lighter));
 }
 
-.systemIconWrap {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: var(--space-lg);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+.yearCard:hover::before {
+  opacity: 1;
 }
 
-.systemIcon {
-  font-size: 2.2rem;
-}
-
-.systemTitle {
-  font-size: var(--font-size-xl);
-  font-weight: 800;
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-sm);
-}
-
-.systemDesc {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  margin-bottom: var(--space-2xl);
-  flex-grow: 1;
-}
-
-.systemArrow {
+.yearBadge {
+  display: inline-block;
+  color: #fff;
+  border-radius: var(--radius-full);
+  padding: 4px 14px;
   font-size: var(--font-size-sm);
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: transform var(--transition-fast);
+  margin-bottom: var(--space-md);
 }
 
-.systemCard:hover .systemArrow {
-  transform: translateX(4px);
+.yearTopics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--space-md);
+}
+
+.topicTag {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+  font-size: var(--font-size-xs);
+  border: 1px solid var(--color-border-light);
+}
+
+.comingSoonTag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+  border-top: 1px solid var(--color-border-light);
+  padding-top: var(--space-sm);
+  margin-top: var(--space-sm);
 }
 
 /* ── CTA Section ── */
@@ -166,11 +204,9 @@
 }
 
 /* ── Responsive ── */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .title { font-size: var(--font-size-3xl); }
-  .systemsGrid {
-    grid-template-columns: 1fr;
-    max-width: 400px;
-    margin: 0 auto;
-  }
+  .yearsGrid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .groupHeader { flex-wrap: wrap; }
+  .groupDivider { display: none; }
 }
