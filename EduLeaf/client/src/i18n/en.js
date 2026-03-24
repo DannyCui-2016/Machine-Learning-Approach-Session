@@ -102,6 +102,9 @@ const en = {
     coming_soon: "Coming Soon",
     coming_desc: "We're developing rich exercises for this level. Check back soon!",
     template_note: "This module is launching soon with full exercises.",
+    tab_overview: "Roadmap & Goals",
+    tab_topics: "Topics & Resources",
+    tab_papers: "Past Papers",
   },
   common: {
     back: "Back",

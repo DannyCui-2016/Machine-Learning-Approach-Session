@@ -101,6 +101,9 @@ const zh = {
     coming_soon: "即将上线",
     coming_desc: "该年级的丰富练习题正在开发中，敬请期待！",
     template_note: "本模块即将推出完整练习内容。",
+    tab_overview: "学习路线与目标",
+    tab_topics: "核心考点与外部资源",
+    tab_papers: "历年真题库",
   },
   common: {
     back: "返回",

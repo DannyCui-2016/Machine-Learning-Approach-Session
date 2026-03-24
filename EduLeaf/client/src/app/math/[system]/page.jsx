@@ -96,13 +96,14 @@ export default function SystemMathPage({ params }) {
                 </div>
                 <div className={styles.yearsGrid}>
                   {group.years.map((year) => (
-                    <YearCard
-                      key={year}
-                      year={year}
-                      color={groupColor}
-                      topics={TOPICS_PREVIEW[year] || []}
-                      t={t}
-                    />
+                    <Link key={year} href={`/math/${system}/year/${year}`} style={{ textDecoration: 'none', display: 'block' }}>
+                      <YearCard
+                        year={year}
+                        color={groupColor}
+                        topics={TOPICS_PREVIEW[year] || []}
+                        t={t}
+                      />
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -128,9 +129,11 @@ export default function SystemMathPage({ params }) {
   );
 }
 
-function YearCard({ year, color, topics, t }) {
+export function YearCard({ year, color, topics, t }) {
+  const isAvailable = year === 12 || year === 13; // Highlight that these have content right now
+
   return (
-    <div className={styles.yearCard} style={{ '--year-color': color }}>
+    <div className={styles.yearCard} style={{ '--year-color': color, opacity: isAvailable ? 1 : 0.85 }}>
       <div className={styles.yearBadge} style={{ background: color }}>
         {t('math.year')} {year}
       </div>
@@ -139,10 +142,18 @@ function YearCard({ year, color, topics, t }) {
           <span key={tp} className={styles.topicTag}>{tp}</span>
         ))}
       </div>
-      <div className={styles.comingSoonTag}>
-        <span>⏳</span>
-        <span>{t('math.coming_soon')}</span>
-      </div>
+      {!isAvailable && (
+        <div className={styles.comingSoonTag}>
+          <span>⏳</span>
+          <span>{t('math.coming_soon')}</span>
+        </div>
+      )}
+      {isAvailable && (
+        <div className={styles.comingSoonTag} style={{ color: color, fontStyle: 'normal', fontWeight: '600' }}>
+          <span>📘</span>
+          <span>View Curriculum →</span>
+        </div>
+      )}
     </div>
   );
 }
