@@ -8,6 +8,7 @@ const { Exam, ExamRecord } = require('../models/models');
 
 const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const answerCache = new Map();
 
 // ── Multer config ─────────────────────────────────────────────────────────────
 const storage = multer.diskStorage({
@@ -68,7 +69,7 @@ router.post('/generate-from-file', upload.single('file'), async (req, res, next)
     // const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const { GoogleGenerativeAI } = require('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' });
 
     const prompt = `
     You are an expert ${subject} language exam generator. Create a structured exam to test the student's ${subject} language knowledge based on the vocabulary, grammar, and phrases found in the following text.
@@ -224,18 +225,23 @@ router.post('/:id/submit', async (req, res, next) => {
 
     const sections = exam.sections;
     let earned = 0, total = 0;
-    Object.values(sections).forEach((qs) => {
-      qs.forEach((q) => {
+    for (const qs of Object.values(sections)) {
+      for (const q of qs) {
         total += q.points || 0;
         const ua = (answers[q.id] || '').toString().trim().toLowerCase();
         const ca = (q.answer || '').toString().trim().toLowerCase();
+        let isCorrect = false;
         if (q.type === 'mc' || q.type === 'tf') {
-          if (ua === ca) earned += q.points || 0;
+          isCorrect = ua === ca;
+        } else if (q.type === 'fill' || q.type === 'translation') {
+          isCorrect = await isAnswerAcceptable(q.question, ca, ua, exam.subject);
         } else {
-          if (ua && (ua.includes(ca) || ca.includes(ua))) earned += q.points || 0;
+          isCorrect = ua && (ua.includes(ca) || ca.includes(ua));
         }
-      });
-    });
+        if (isCorrect) earned += q.points || 0;
+      }
+    }
+
 
     const score = Math.round((earned / total) * 100);
     await ExamRecord.create({ examId: exam.id, score, total: 100, timeElapsed: timeElapsed || 0, answersJson: JSON.stringify(answers) });
@@ -253,16 +259,53 @@ router.post('/:id/verify-section', async (req, res, next) => {
     const qs = exam.sections[section] || [];
     let correct = 0;
     const details = {};
-    qs.forEach((q) => {
+    for (const q of qs) {
       const ua = (answers[q.id] || '').toString().trim().toLowerCase();
       const ca = (q.answer || '').toString().trim().toLowerCase();
-      const ok = (q.type === 'mc' || q.type === 'tf') ? ua === ca : (ua.includes(ca) || ca.includes(ua));
+      let ok = false;
+      if (q.type === 'mc' || q.type === 'tf') {
+        ok = ua === ca;
+      } else if (q.type === 'fill' || q.type === 'translation') {
+        ok = await isAnswerAcceptable(q.question, ca, ua, exam.subject);
+      } else {
+        ok = ua && (ua.includes(ca) || ca.includes(ua));
+      }
       details[q.id] = ok;
       if (ok) correct++;
-    });
+    }
+
     res.json({ correct, total: qs.length, details });
   } catch (err) { next(err); }
 });
+
+
+async function isAnswerAcceptable(question, correctAnswer, userAnswer, subject) {
+  const cacheKey = `${question}|${correctAnswer}|${userAnswer}`;
+  if (answerCache.has(cacheKey)) {
+    return answerCache.get(cacheKey);
+  }
+  
+  try {
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' });
+    const prompt = `You are a ${subject} language teacher grading an exam.
+Question: "${question}"
+Model answer: "${correctAnswer}"
+Student answer: "${userAnswer}"
+Is the student's answer linguistically correct and acceptable for this question?
+Reply with ONLY "true" or "false".`;
+    const result = await model.generateContent(prompt);
+    const response = result.response.text().trim().toLowerCase();
+    const isCorrect = response === 'true';
+    answerCache.set(cacheKey, isCorrect);
+    return isCorrect;
+  } catch {
+    const ua = userAnswer.toLowerCase().trim();
+    const ca = correctAnswer.toLowerCase().trim();
+    return ua.includes(ca) || ca.includes(ua);
+  }
+}
 
 // ── Mock helper ───────────────────────────────────────────────────────────────
 function getMockExam(subject, level) {
