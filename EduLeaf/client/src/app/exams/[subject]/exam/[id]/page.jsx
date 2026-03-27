@@ -153,20 +153,13 @@ export default function ExamPage() {
   // ── Verify section ─────────────────────────────────────────────────────────
   const handleVerifySection = useCallback(async (sectionKey) => {
     if (!exam) return;
-    const sectionQs = exam.sections[sectionKey] || [];
-    let correct = 0;
-    const details = {};
-    sectionQs.forEach((q) => {
-      const userAns = (answers[q.id] || '').toString().trim().toLowerCase();
-      const correctAns = (q.answer || '').toString().trim().toLowerCase();
-      const isOk = (q.type === 'mc' || q.type === 'tf')
-        ? userAns === correctAns
-        : userAns.includes(correctAns) || correctAns.includes(userAns);
-      details[q.id] = isOk;
-      if (isOk) correct++;
-    });
-    setSectionVerifyResult((prev) => ({ ...prev, [sectionKey]: details }));
-    setVerified((prev) => ({ ...prev, [sectionKey]: { correct, total: sectionQs.length } }));
+    try {
+      const result = await verifySection(exam.id, sectionKey, answers);
+      setSectionVerifyResult((prev) => ({ ...prev, [sectionKey]: result.details }));
+      setVerified((prev) => ({ ...prev, [sectionKey]: { correct: result.correct, total: result.total } }));
+    } catch (err) {
+      console.error(err);
+    }
   }, [exam, answers]);
 
   // ── Submit exam ────────────────────────────────────────────────────────────
