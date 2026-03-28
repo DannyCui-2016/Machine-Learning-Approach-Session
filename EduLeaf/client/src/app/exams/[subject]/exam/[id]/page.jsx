@@ -122,6 +122,14 @@ export default function ExamPage() {
     const newSectionVerifyResult = {};
     const newVerified = {};
 
+    const normalize = (str) =>
+      (str || '')
+        .toLowerCase()
+        .replace(/['’`´]/g, "'")
+        .replace(/[.,!?¡¿"“”]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
     Object.entries(examData.sections).forEach(([sectionKey, qs]) => {
       let correct = 0;
       const details = {};
@@ -129,9 +137,13 @@ export default function ExamPage() {
         total += q.points || 0;
         const userAns = (ans[q.id] || '').toString().trim().toLowerCase();
         const correctAns = (q.answer || '').toString().trim().toLowerCase();
+        
+        const normUser = normalize(ans[q.id]);
+        const normCorrect = normalize(q.answer);
+
         const isOk = (q.type === 'mc' || q.type === 'tf')
           ? userAns === correctAns
-          : !!userAns && (userAns.includes(correctAns) || correctAns.includes(userAns));
+          : !!normUser && (normUser.includes(normCorrect) || normCorrect.includes(normUser));
 
         details[q.id] = isOk;
         if (isOk) {

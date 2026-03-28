@@ -280,6 +280,27 @@ router.post('/:id/verify-section', async (req, res, next) => {
 
 
 async function isAnswerAcceptable(question, correctAnswer, userAnswer, subject) {
+  // Normalize strings to prevent unnecessary AI calls for simple punctuation/apostrophe differences
+  const normalize = (str) =>
+    (str || '')
+      .toLowerCase()
+      .replace(/['’`´]/g, "'") // standardize apostrophes
+      .replace(/[.,!?¡¿"“”]/g, "") // remove punctuation
+      .replace(/\s+/g, " ") // normalize spacing
+      .trim();
+
+  const normUser = normalize(userAnswer);
+  const normCorrect = normalize(correctAnswer);
+
+  // Fast fail on empty answer, preventing incorrect String.includes("") match in fallback
+  if (!normUser) {
+    return false;
+  }
+
+  if (normUser === normCorrect) {
+    return true;
+  }
+
   const cacheKey = `${question}|${correctAnswer}|${userAnswer}`;
   if (answerCache.has(cacheKey)) {
     return answerCache.get(cacheKey);
@@ -301,9 +322,7 @@ Reply with ONLY "true" or "false".`;
     answerCache.set(cacheKey, isCorrect);
     return isCorrect;
   } catch {
-    const ua = userAnswer.toLowerCase().trim();
-    const ca = correctAnswer.toLowerCase().trim();
-    return ua.includes(ca) || ca.includes(ua);
+    return normUser.includes(normCorrect) || normCorrect.includes(normUser);
   }
 }
 
