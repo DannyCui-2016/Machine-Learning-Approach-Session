@@ -91,8 +91,8 @@ function TopicPathView({ system }) {
           {/* Connector to next stage */}
           {sIdx < CAMBRIDGE_TOPIC_PATH.length - 1 && (
             <div className={styles.stageConnector}>
-              <div className={styles.connectorLine} />
-              <span className={styles.connectorArrow}>▼</span>
+              {/* <div className={styles.connectorLine} /> */}
+              {/* <span className={styles.connectorArrow}>▼</span> */}
             </div>
           )}
         </div>
