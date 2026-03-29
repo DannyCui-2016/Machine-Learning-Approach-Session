@@ -137,7 +137,7 @@ export default function ExamPage() {
         total += q.points || 0;
         const userAns = (ans[q.id] || '').toString().trim().toLowerCase();
         const correctAns = (q.answer || '').toString().trim().toLowerCase();
-        
+
         const normUser = normalize(ans[q.id]);
         const normCorrect = normalize(q.answer);
 
@@ -178,9 +178,15 @@ export default function ExamPage() {
   const handleSubmit = useCallback(async () => {
     if (!exam) return;
     clearInterval(timerRef.current);
-    await submitExam(exam.id, answers, timeElapsed);
-    reviewAnswers(exam, answers);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const serverResult = await submitExam(exam.id, answers, timeElapsed);
+    if (serverResult && serverResult.score !== undefined) {
+      setResult({ score: serverResult.score, total: 100 });
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      reviewAnswers(exam, answers);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }, [exam, answers, reviewAnswers, timeElapsed]);
 
   // ── Render helpers ─────────────────────────────────────────────────────────

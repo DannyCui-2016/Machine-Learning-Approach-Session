@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
-const { Exam, ExamRecord } = require('../models/models');
+const { Exam, ExamRecord, GradingCache } = require('../models/models');
 
 const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -69,7 +69,7 @@ router.post('/generate-from-file', upload.single('file'), async (req, res, next)
     // const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const { GoogleGenerativeAI } = require('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
     You are an expert ${subject} language exam generator. Create a structured exam to test the student's ${subject} language knowledge based on the vocabulary, grammar, and phrases found in the following text.
@@ -280,36 +280,37 @@ router.post('/:id/verify-section', async (req, res, next) => {
 
 
 async function isAnswerAcceptable(question, correctAnswer, userAnswer, subject) {
-  // Normalize strings to prevent unnecessary AI calls for simple punctuation/apostrophe differences
   const normalize = (str) =>
-    (str || '')
-      .toLowerCase()
-      .replace(/['’`´]/g, "'") // standardize apostrophes
-      .replace(/[.,!?¡¿"“”]/g, "") // remove punctuation
-      .replace(/\s+/g, " ") // normalize spacing
-      .trim();
+    (str || '').toLowerCase()
+      .replace(/[''`´]/g, "'")
+      .replace(/[.,!?¡¿"""]/g, "")
+      .replace(/\s+/g, " ").trim();
 
   const normUser = normalize(userAnswer);
   const normCorrect = normalize(correctAnswer);
 
-  // Fast fail on empty answer, preventing incorrect String.includes("") match in fallback
-  if (!normUser) {
-    return false;
-  }
+  if (!normUser) return false;
+  if (normUser === normCorrect) return true;
 
-  if (normUser === normCorrect) {
-    return true;
-  }
+  const cacheKey = `${normalize(question)}|${normCorrect}|${normUser}`;
 
-  const cacheKey = `${question}|${correctAnswer}|${userAnswer}`;
-  if (answerCache.has(cacheKey)) {
-    return answerCache.get(cacheKey);
-  }
-  
+  // 先查内存缓存
+  if (answerCache.has(cacheKey)) return answerCache.get(cacheKey);
+
+  // 再查数据库缓存
+  try {
+    const cached = await GradingCache.findOne({ where: { cacheKey } });
+    if (cached) {
+      answerCache.set(cacheKey, cached.result);
+      return cached.result;
+    }
+  } catch { }
+
+  // 都没有才调用 AI
   try {
     const { GoogleGenerativeAI } = require('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const prompt = `You are a ${subject} language teacher grading an exam.
 Question: "${question}"
 Model answer: "${correctAnswer}"
@@ -319,10 +320,16 @@ Reply with ONLY "true" or "false".`;
     const result = await model.generateContent(prompt);
     const response = result.response.text().trim().toLowerCase();
     const isCorrect = response === 'true';
+
+    // 存入内存和数据库
     answerCache.set(cacheKey, isCorrect);
+    await GradingCache.findOrCreate({ where: { cacheKey }, defaults: { result: isCorrect } });
     return isCorrect;
-  } catch {
-    return normUser.includes(normCorrect) || normCorrect.includes(normUser);
+  } catch (err) {
+    console.error(`Gemini grading error: ${err.message}`);
+    const fallback = normUser.includes(normCorrect) || normCorrect.includes(normUser);
+    answerCache.set(cacheKey, fallback);
+    return fallback;
   }
 }
 

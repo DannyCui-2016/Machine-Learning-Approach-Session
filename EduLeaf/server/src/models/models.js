@@ -39,8 +39,19 @@ const Favorite = sequelize.define('Favorite', {
   timestamps: true,
 });
 
+const GradingCache = sequelize.define('GradingCache', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  cacheKey: { type: DataTypes.STRING(512), allowNull: false, unique: true },
+  result: { type: DataTypes.BOOLEAN, allowNull: false },
+}, {
+  tableName: 'grading_cache',
+  timestamps: true,
+});
+
+
+
 // ── Associations ─────────────────────────────────────────────────────────────
 Exam.hasMany(ExamRecord, { foreignKey: 'examId', as: 'records' });
 ExamRecord.belongsTo(Exam, { foreignKey: 'examId', as: 'exam' });
 
-module.exports = { Exam, ExamRecord, Favorite };
+module.exports = { Exam, ExamRecord, Favorite, GradingCache };
